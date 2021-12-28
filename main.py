@@ -7,8 +7,8 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from matplotlib import animation
 
 ### Pick one
-# import geom_controller as cont # Best performing
-import PD_controller as cont # Works on simple trajectories, but tud is too fast
+import geom_controller as cont # Best performing
+# import PD_controller as cont # Works on simple trajectories, but tud is too fast
 
 ### Pick one
 # from util.hover import hover as traj
@@ -70,7 +70,8 @@ print(f"Battery usage: {bat_usage}")
 
 
 fig = plt.figure()
-ax1 = p3.Axes3D(fig) # 3D place for drawing
+ax1 = p3.Axes3D(fig, auto_add_to_figure=False) # 3D place for drawing
+fig.add_axes(ax1)
 real_trajectory['x'] = np.array(real_trajectory['x'])
 real_trajectory['y'] = np.array(real_trajectory['y'])
 real_trajectory['z'] = np.array(real_trajectory['z'])
@@ -90,7 +91,6 @@ ax1.set_title('3D animate')
 ax1.view_init(0, 0)
 ax1.legend(loc='lower right')
 
-
 def animate(i):
     line.set_xdata(real_trajectory['x'][:i + 1])
     line.set_ydata(real_trajectory['y'][:i + 1])
@@ -98,9 +98,9 @@ def animate(i):
     lineRef.set_xdata(des_trajectory['x'][:i + 1])
     lineRef.set_ydata(des_trajectory['y'][:i + 1])
     lineRef.set_3d_properties(des_trajectory['z'][:i + 1])
-    point.set_xdata(real_trajectory['x'][i])
-    point.set_ydata(real_trajectory['y'][i])
-    point.set_3d_properties(real_trajectory['z'][i])
+    point.set_xdata([real_trajectory['x'][i]])
+    point.set_ydata([real_trajectory['y'][i]])
+    point.set_3d_properties([real_trajectory['z'][i]])
 
 ani = animation.FuncAnimation(fig=fig,
                               func=animate,
