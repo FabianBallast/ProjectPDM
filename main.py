@@ -5,6 +5,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 from matplotlib import animation
+from obstacles.ObstacleHandler import ObstacleHandler
+from obstacles.Obstacle import Shelf
+
+
+ob1 = Shelf(np.array([2,2,4]), np.array([4,4,8]))
+obHand = ObstacleHandler([ob1])
+
 
 ### Pick one
 import geom_controller as cont # Best performing
@@ -84,12 +91,13 @@ lineRef, = ax1.plot([des_trajectory['x'][0]], [des_trajectory['y'][0]], [des_tra
 ax1.set_xlabel('x')
 ax1.set_ylabel('y')
 ax1.set_zlabel('z')
-ax1.set_xlim3d(-2, 2)
-ax1.set_ylim3d(-2, 12)
-ax1.set_zlim3d(-3, 11)
+ax1.set_xlim3d(0, 10)
+ax1.set_ylim3d(0, 10)
+ax1.set_zlim3d(0, 10)
 ax1.set_title('3D animate')
 ax1.view_init(0, 0)
 ax1.legend(loc='lower right')
+obHand.plot_obstacles(ax1)
 
 def animate(i):
     line.set_xdata(real_trajectory['x'][:i + 1])
