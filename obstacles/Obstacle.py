@@ -24,7 +24,7 @@ class Obstacle:
         Returns:
             Bool: True if in the obstacle.
         """
-        return (abs(self.position - point) < self.dimensions/2).all
+        return (abs(self.position - point) <= self.dimensions/2).all()
     
     def plot_obstacle(self, axes) -> None:
         """
@@ -33,13 +33,6 @@ class Obstacle:
         Args:
             axes: axes to plot the obstacle onto.
         """
-        # x_max, y_max, z_max = np.round(self.position + self.dimensions/2).astype(int)
-        # x_min, y_min, z_min = np.round(self.position - self.dimensions/2).astype(int)
-
-        # x, y, z = np.indices((x_max, y_max, z_max))
-        # obstacle = (x_min <= x) & (x <= x_max) & (y_min <= y) & (y <= y_max) & (z_min <= z) & (z <= z_max)
-        # axes.voxels(obstacle, facecolor=self.rgba)
-
         X = np.array([[[-1,  1, -1], [-1, -1, -1], [ 1, -1, -1], [ 1,  1, -1]],
                       [[-1, -1, -1], [-1, -1,  1], [ 1, -1,  1], [ 1, -1, -1]],
                       [[ 1, -1,  1], [ 1, -1, -1], [ 1,  1, -1], [ 1,  1,  1]],
@@ -49,7 +42,6 @@ class Obstacle:
         
         X *= self.dimensions/2
         X += np.array(self.position)
-        print(self.rgba)
         axes.add_collection3d(Poly3DCollection(X, facecolors=self.rgba, edgecolors = 'k'))
 
 class Shelf(Obstacle):
