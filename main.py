@@ -123,11 +123,14 @@ def animate(i):
     point.set_ydata([real_trajectory['y'][i]])
     point.set_3d_properties([real_trajectory['z'][i]])
 
+    return line, lineRef, point
+
 ani = animation.FuncAnimation(fig=fig,
                               func=animate,
                               frames=len(real_trajectory['x']),
-                              interval=1,
+                              interval=dt*1000,
                               repeat=False,
-                              blit=False)
+                              blit=True)
 
+# ani.to_html5_video()
 plt.show()

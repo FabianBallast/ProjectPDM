@@ -12,6 +12,7 @@ class Obstacle:
         """
         self.position = None
         self.dimensions = None
+        self.safety_region = None
         self.rgba = None
     
     def point_in_obstacle(self, points) -> bool:
@@ -25,7 +26,7 @@ class Obstacle:
         Returns:
             Bool: True if in the obstacle.
         """
-        return np.any(np.all(abs(self.position - points) <= self.dimensions/2, axis=1))
+        return np.any(np.all(abs(self.position - points) <= self.dimensions/2 + self.safety_region, axis=1))
     
     def line_through_obstacle(self, q0, q1, n:int = 50) -> bool:
         """
@@ -76,7 +77,8 @@ class Shelf(Obstacle):
         """
         self.position = position
         self.dimensions = dimensions
-        self.rgba = (1, 0, 0, 0.5)
+        self.safety_region = np.array([0.25, 0.25, 0.25])
+        self.rgba = (1, 0, 0, 0.25)
 
 
 
