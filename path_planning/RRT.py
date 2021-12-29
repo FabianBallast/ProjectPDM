@@ -48,7 +48,7 @@ class RRT:
                 self.tree.add_vertex(q_random, q_closest)
 
                 if not self.obstacleHandler.line_through_obstacles(q_random, q_goal):
-                    self.tree.add_vertex(q_goal, q_random)
+                    self.tree.add_final_vertex(q_goal, q_random)
 
                     return self.tree
         

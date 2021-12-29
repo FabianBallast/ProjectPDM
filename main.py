@@ -8,6 +8,7 @@ from matplotlib import animation
 from obstacles.ObstacleHandler import ObstacleHandler
 from obstacles.Obstacle import Shelf
 from path_planning.RRT import RRT
+from util.traj_from_line import point_from_traj
 
 ### Pick one
 import geom_controller as cont # Best performing
@@ -15,6 +16,10 @@ import geom_controller as cont # Best performing
 
 ### Pick one
 from util.tud import tud as traj
+
+### Start and goal
+start = np.array([9,9,1])
+goal = np.array([1,1,9])
 
 ### Temporary obstacles
 ob1 = Shelf(np.array([3,4,5]), np.array([2,8,10]))
@@ -25,9 +30,14 @@ obHand = ObstacleHandler([ob1, ob2])
 # x, y, z = np.meshgrid(np.linspace(0, 10, 6), np.linspace(0, 10, 6), np.linspace(0, 10, 6))
 
 path = RRT(np.array([10, 10, 10]), obHand)
+tree = path.find_path(start, goal, 100)
+curr_goal_ind = 1
+curr_goal = tree.sorted_vertices[curr_goal_ind]
+past_goal = tree.sorted_vertices[curr_goal_ind - 1]
+t0 = 0
+timeToNode = 5
 
 env = gym.make('Quadrotor-v0')
-start = traj(0)[0]
 current_state = env.reset(position=start)
 controller = cont.controlller()
 
@@ -35,14 +45,11 @@ controller = cont.controlller()
 dt = 0.01
 t = 0
 
-track_error = 0
-bat_usage = 0
-T_fin = 0
-
 real_trajectory = {'x': [], 'y': [], 'z': []}
 des_trajectory = {'x': [], 'y': [], 'z': []}
 while(t < 25):
-    trajectory_goal = traj(t)
+    trajec = point_from_traj(past_goal, curr_goal, t0+timeToNode, t, t0)
+    trajectory_goal = [trajec[0], trajec[1], trajec[2], 0, 0]
     control_input = controller.control(trajectory_goal, current_state)
     obs, reward, done, info = env.step(control_input['cmd_motor_speeds'])
 
@@ -55,12 +62,18 @@ while(t < 25):
     des_trajectory['z'].append(trajectory_goal[0][2])
     current_state = obs
 
-    if np.all(trajectory_goal[5] == True):
-        T_fin = t
-        break
-    else:
-        t += dt
+    t += dt
 
+    if np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.1 and np.all(curr_goal == goal):
+        print(curr_goal, goal)
+        print("Done!")
+        break
+    elif np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.1:
+        curr_goal_ind += 1
+        past_goal = curr_goal
+        print(curr_goal)
+        curr_goal = tree.sorted_vertices[curr_goal_ind]
+        t0 = t
 
 
 fig = plt.figure()
@@ -95,7 +108,7 @@ obHand.plot_obstacles(ax1)
 #     else:
 #         ax1.plot([point[0]], [point[1]], [point[2]], 'go')
 
-tree = path.find_path(np.array([9,9,1]), np.array([1,1,9]), 100)
+
 tree.plot_tree(ax1)
 
 
@@ -110,11 +123,11 @@ def animate(i):
     point.set_ydata([real_trajectory['y'][i]])
     point.set_3d_properties([real_trajectory['z'][i]])
 
-# ani = animation.FuncAnimation(fig=fig,
-#                               func=animate,
-#                               frames=len(real_trajectory['x']),
-#                               interval=1,
-#                               repeat=False,
-#                               blit=False)
+ani = animation.FuncAnimation(fig=fig,
+                              func=animate,
+                              frames=len(real_trajectory['x']),
+                              interval=1,
+                              repeat=False,
+                              blit=False)
 
 plt.show()
