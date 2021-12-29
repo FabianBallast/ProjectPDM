@@ -47,7 +47,9 @@ t = 0
 
 real_trajectory = {'x': [], 'y': [], 'z': []}
 des_trajectory = {'x': [], 'y': [], 'z': []}
-while(t < 25):
+
+final_goal_reached = False
+while not final_goal_reached:
     trajec = point_from_traj(past_goal, curr_goal, t0+timeToNode, t, t0)
     trajectory_goal = [trajec[0], trajec[1], trajec[2], 0, 0]
     control_input = controller.control(trajectory_goal, current_state)
@@ -64,14 +66,13 @@ while(t < 25):
 
     t += dt
 
-    if np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.1 and np.all(curr_goal == goal):
-        print(curr_goal, goal)
+    if np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.01 and np.all(curr_goal == goal):
         print("Done!")
+        final_goal_reached = True
         break
-    elif np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.1:
+    elif np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.25 and not np.all(curr_goal == goal):
         curr_goal_ind += 1
         past_goal = curr_goal
-        print(curr_goal)
         curr_goal = tree.sorted_vertices[curr_goal_ind]
         t0 = t
 
@@ -85,7 +86,7 @@ real_trajectory['z'] = np.array(real_trajectory['z'])
 des_trajectory['x'] = np.array(des_trajectory['x'])
 des_trajectory['y'] = np.array(des_trajectory['y'])
 des_trajectory['z'] = np.array(des_trajectory['z'])
-point, = ax1.plot([real_trajectory['x'][0]], [real_trajectory['y'][0]], [real_trajectory['z'][0]], 'ro', label='Quadrotor')
+point, = ax1.plot([real_trajectory['x'][0]], [real_trajectory['y'][0]], [real_trajectory['z'][0]], 'co', label='Quadrotor')
 line, = ax1.plot([real_trajectory['x'][0]], [real_trajectory['y'][0]], [real_trajectory['z'][0]], label='Real_Trajectory')
 lineRef, = ax1.plot([des_trajectory['x'][0]], [des_trajectory['y'][0]], [des_trajectory['z'][0]], label='Desired_Trajectory')
 ax1.set_xlabel('x')
@@ -95,8 +96,7 @@ ax1.set_xlim3d(0, 10)
 ax1.set_ylim3d(0, 10)
 ax1.set_zlim3d(0, 10)
 ax1.set_title('3D animate')
-ax1.view_init(0, 0)
-ax1.legend(loc='lower right')
+ax1.view_init(40, 40)
 
 # Plot obstacles to test placement
 obHand.plot_obstacles(ax1)
@@ -110,7 +110,7 @@ obHand.plot_obstacles(ax1)
 
 
 tree.plot_tree(ax1)
-
+ax1.legend(loc='lower right')
 
 def animate(i):
     line.set_xdata(real_trajectory['x'][:i + 1])
@@ -132,5 +132,4 @@ ani = animation.FuncAnimation(fig=fig,
                               repeat=False,
                               blit=True)
 
-# ani.to_html5_video()
 plt.show()

@@ -83,6 +83,6 @@ class Tree:
             axes.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]], 'ro-', zorder=1)
         
         sorted_vertices = np.asarray(self.sorted_vertices)
-        axes.plot(sorted_vertices[:, 0], sorted_vertices[:, 1], sorted_vertices[:, 2], 'go-', zorder=2)
-        axes.plot([self.vertices[ 0][0]], [self.vertices[ 0][1]], [self.vertices[ 0][2]], 'bo', zorder=3)
-        axes.plot([self.vertices[-1][0]], [self.vertices[-1][1]], [self.vertices[-1][2]], 'yo', zorder=3)
+        axes.plot(sorted_vertices[:, 0], sorted_vertices[:, 1], sorted_vertices[:, 2], 'go-', zorder=2, label="Path")
+        axes.plot([self.vertices[ 0][0]], [self.vertices[ 0][1]], [self.vertices[ 0][2]], 'bo', zorder=3, label="Start")
+        axes.plot([self.vertices[-1][0]], [self.vertices[-1][1]], [self.vertices[-1][2]], 'yo', zorder=3, label="End")
