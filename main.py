@@ -7,6 +7,7 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from matplotlib import animation
 from obstacles.ObstacleHandler import ObstacleHandler
 from obstacles.Obstacle import Shelf
+from path_planning.RRT import RRT
 
 ### Pick one
 import geom_controller as cont # Best performing
@@ -16,13 +17,14 @@ import geom_controller as cont # Best performing
 from util.tud import tud as traj
 
 ### Temporary obstacles
-ob1 = Shelf(np.array([2,2,4]), np.array([4,4,8]))
-ob2 = Shelf(np.array([7,5,2]), np.array([2,6,4]))
+ob1 = Shelf(np.array([3,4,5]), np.array([2,8,10]))
+ob2 = Shelf(np.array([7,6,5]), np.array([2,8,10]))
 obHand = ObstacleHandler([ob1, ob2])
 
-### Grid for obstacle detection test
-x, y, z = np.meshgrid(np.linspace(0, 10, 6), np.linspace(0, 10, 6), np.linspace(0, 10, 6))
+# ### Grid for obstacle detection test
+# x, y, z = np.meshgrid(np.linspace(0, 10, 6), np.linspace(0, 10, 6), np.linspace(0, 10, 6))
 
+path = RRT(np.array([10, 10, 10]), obHand)
 
 env = gym.make('Quadrotor-v0')
 start = traj(0)[0]
@@ -86,12 +88,16 @@ ax1.legend(loc='lower right')
 # Plot obstacles to test placement
 obHand.plot_obstacles(ax1)
 
-# Plot points in grid to test obstacle detection
-for point in list(zip(x.flatten(), y.flatten(), z.flatten())):
-    if obHand.point_in_obstacle(point):
-        ax1.plot([point[0]], [point[1]], [point[2]], 'bo')
-    else:
-        ax1.plot([point[0]], [point[1]], [point[2]], 'go')
+# # Plot points in grid to test obstacle detection
+# for point in list(zip(x.flatten(), y.flatten(), z.flatten())):
+#     if obHand.point_in_obstacle(point):
+#         ax1.plot([point[0]], [point[1]], [point[2]], 'bo')
+#     else:
+#         ax1.plot([point[0]], [point[1]], [point[2]], 'go')
+
+tree = path.find_path(np.array([9,9,1]), np.array([1,1,9]), 100)
+tree.plot_tree(ax1)
+
 
 def animate(i):
     line.set_xdata(real_trajectory['x'][:i + 1])

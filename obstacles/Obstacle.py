@@ -14,17 +14,34 @@ class Obstacle:
         self.dimensions = None
         self.rgba = None
     
-    def point_in_obstacle(self, point) -> bool:
+    def point_in_obstacle(self, points) -> bool:
         """
         Check if a point is inside the obstacle. Assumes a rectangular cuboid.
-        
+        Works for multiple points at the same time on the same object.
+
         Args: 
-            - point: array of size 3 with the xyz coordinates of the point.
+            - points: array of shape (N, 3) with the xyz coordinates of N points.
 
         Returns:
             Bool: True if in the obstacle.
         """
-        return (abs(self.position - point) <= self.dimensions/2).all()
+        return np.any(np.all(abs(self.position - points) <= self.dimensions/2, axis=1))
+    
+    def line_through_obstacle(self, q0, q1, n:int = 50) -> bool:
+        """
+        Check if the path from q0 to q1 passes through this obstacle.
+        We check n points on this line to do so.
+
+        Args: 
+            - q0: initial node
+            - q1: end node
+            - n: number of points to evaluate on this line.
+
+        Returns:
+            Bool: True if through the obstacle.
+        """
+        points = np.linspace(q0, q1, n)
+        return self.point_in_obstacle(points)
     
     def plot_obstacle(self, axes) -> None:
         """

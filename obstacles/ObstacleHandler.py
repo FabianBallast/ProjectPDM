@@ -36,11 +36,29 @@ class ObstacleHandler:
             Bool: True if in any of the obstacles.
         """
         for obstacle in self.obstacleList:
-            if obstacle.point_in_obstacle(point):
+            if obstacle.point_in_obstacle([point]):
                 return True
 
         return False
 
+    def line_through_obstacles(self, q0, q1, n:int = 50) -> bool:
+        """
+        Check if the path from q0 to q1 passes through any obstacle.
+        We check n points on this line to do so.
+
+        Args: 
+            - q0: initial node
+            - q1: end node
+            - n: number of points to evaluate on this line.
+
+        Returns:
+            Bool: True if through the obstacle.
+        """
+        for obstacle in self.obstacleList:
+            if obstacle.line_through_obstacle(q0, q1, n):
+                return True
+
+        return False
 
     def plot_obstacles(self, axes) -> None:
         """
