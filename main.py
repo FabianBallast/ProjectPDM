@@ -18,13 +18,22 @@ goal = np.array([1,1,9])
 
 ### Temporary obstacles
 ob1 = Shelf(np.array([3,4,5]), np.array([2,8,10]))
-ob2 = Shelf(np.array([7,6,5]), np.array([2,8,10]))
-obHand = ObstacleHandler([ob1, ob2])
+# ob2 = Shelf(np.array([7,6,5]), np.array([2,8,10])) Simple shelf
+
+# Shelf with hole
+ob2 = Shelf(np.array([7,6,1.5]), np.array([2,8,3]))
+ob3 = Shelf(np.array([7,6,8.5]), np.array([2,8,3]))
+ob4 = Shelf(np.array([7,8.5,5]), np.array([2,3,4]))
+ob5 = Shelf(np.array([7,3.5,5]), np.array([2,3,4]))
+obHand = ObstacleHandler([ob1, ob2, ob3, ob4, ob5])
 
 # ### Grid for obstacle detection test
 # x, y, z = np.meshgrid(np.linspace(0, 10, 6), np.linspace(0, 10, 6), np.linspace(0, 10, 6))
 
+### Pick one
+# path = RRT(np.array([10, 10, 10]), obHand)
 path = RRTstar(np.array([10, 10, 10]), obHand)
+
 tree = path.find_path(start, goal, 200)
 curr_goal_ind = 1
 curr_goal = tree.sorted_vertices[curr_goal_ind].state
