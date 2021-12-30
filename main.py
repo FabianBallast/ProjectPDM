@@ -10,13 +10,7 @@ from obstacles.Obstacle import Shelf
 from path_planning.RRT import RRT
 from path_planning.RRTstar import RRTstar
 from util.traj_from_line import point_from_traj
-
-### Pick one
 import geom_controller as cont # Best performing
-# import PD_controller as cont # Works on simple trajectories, but tud is too fast
-
-### Pick one
-from util.tud import tud as traj
 
 ### Start and goal
 start = np.array([9,9,1])

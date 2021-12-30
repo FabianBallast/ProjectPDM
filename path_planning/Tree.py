@@ -123,25 +123,29 @@ class Tree:
             - obs_hand: Obstacle handler with obstacles.
             - gamma: gamma from equation in the slides.
         """
+        # Calculate radius from slides (note: there is a smaller one in one of the slides.)
         n = len(self.vertices)
         d = len(self.vertices[0].state)
         radius = gamma * (np.log(n) / n)**(1/d)
 
+        # Check the vertices that are within this radius
         vertices_to_check = [vertex for vertex in neighbours if vertex_add.distance_to(vertex) <= radius]
 
         if len(vertices_to_check) > 0:
             
             closest_neighbour = self.find_closest_neighbour(vertex_add, vertices_to_check)
             lowest_cost_neighbour, _ = self.find_lowest_cost_neighbour(vertex_add, vertices_to_check)
-    
-            if not lowest_cost_neighbour == closest_neighbour:
 
+            # If the lowest cost neighbour is different from the closest, rerouting might be needed. Otherwise, it is a general addition.
+            if not lowest_cost_neighbour == closest_neighbour:
+                
+                # Check all vertices for rerouting, and add default vertex to end to recheck that one at the end.
                 vertices_to_check.append(vertex_add)
                 for vertex in vertices_to_check:
                     collision_free_neighbours = self.find_collision_free_neighbours(vertex, vertices_to_check, obs_hand)
                     lowest_cost_neighbour, lowest_cost = self.find_lowest_cost_neighbour(vertex, collision_free_neighbours)
 
-                    if vertex.find_cost_from(lowest_cost_neighbour) < vertex.get_cost() and not lowest_cost_neighbour == vertex.parent_vertex: 
+                    if lowest_cost < vertex.get_cost() and not lowest_cost_neighbour == vertex.parent_vertex: 
                         vertex.make_edge_with_parent(lowest_cost_neighbour)
 
     
