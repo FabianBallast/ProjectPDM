@@ -8,6 +8,7 @@ from matplotlib import animation
 from obstacles.ObstacleHandler import ObstacleHandler
 from obstacles.Obstacle import Shelf
 from path_planning.RRT import RRT
+from path_planning.RRTstar import RRTstar
 from util.traj_from_line import point_from_traj
 
 ### Pick one
@@ -29,11 +30,11 @@ obHand = ObstacleHandler([ob1, ob2])
 # ### Grid for obstacle detection test
 # x, y, z = np.meshgrid(np.linspace(0, 10, 6), np.linspace(0, 10, 6), np.linspace(0, 10, 6))
 
-path = RRT(np.array([10, 10, 10]), obHand)
-tree = path.find_path(start, goal, 100)
+path = RRTstar(np.array([10, 10, 10]), obHand)
+tree = path.find_path(start, goal, 200)
 curr_goal_ind = 1
-curr_goal = tree.sorted_vertices[curr_goal_ind]
-past_goal = tree.sorted_vertices[curr_goal_ind - 1]
+curr_goal = tree.sorted_vertices[curr_goal_ind].state
+past_goal = tree.sorted_vertices[curr_goal_ind - 1].state
 t0 = 0
 timeToNode = 5
 
@@ -73,7 +74,7 @@ while not final_goal_reached:
     elif np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.25 and not np.all(curr_goal == goal):
         curr_goal_ind += 1
         past_goal = curr_goal
-        curr_goal = tree.sorted_vertices[curr_goal_ind]
+        curr_goal = tree.sorted_vertices[curr_goal_ind].state
         t0 = t
 
 
