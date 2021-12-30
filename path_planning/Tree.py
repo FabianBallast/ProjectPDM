@@ -11,7 +11,7 @@ class Tree:
         Args:
             - x_0: State of first vertex.
         """
-        self.vertices = [Vertex(x_0, 0)]
+        self.vertices = [Vertex(x_0, True)]
         self.sorted_vertices = []
 
     def find_closest_neighbour(self, q: Vertex, neighbours=None):
@@ -79,7 +79,7 @@ class Tree:
         if q_connection_point is None:
             q_connection_point = self.find_closest_neighbour(q_add)
 
-        q_add.set_parent_vertex(q_connection_point)
+        q_add.make_edge_with_parent(q_connection_point)
 
     def sort(self, q_goal=None) -> None:
         """
@@ -113,7 +113,7 @@ class Tree:
         axes.plot([path_taken[ 0][0]], [path_taken[ 0][1]], [path_taken[ 0][2]], 'bo', zorder=3, label="Start")
         axes.plot([path_taken[-1][0]], [path_taken[-1][1]], [path_taken[-1][2]], 'yo', zorder=3, label="End")
 
-    def reroute(self, vertex_add, neighbours, obs_hand, gamma=10) -> None:
+    def reroute(self, vertex_add, neighbours, obs_hand, gamma=5) -> None:
         """
         Reroute the tree after adding a vertex. 
 
@@ -133,22 +133,18 @@ class Tree:
             
             closest_neighbour = self.find_closest_neighbour(vertex_add, vertices_to_check)
             lowest_cost_neighbour, _ = self.find_lowest_cost_neighbour(vertex_add, vertices_to_check)
-
+    
             if not lowest_cost_neighbour == closest_neighbour:
 
                 vertices_to_check.append(vertex_add)
-                for vertex in vertices_to_check[0:-2]:
+                for vertex in vertices_to_check:
                     collision_free_neighbours = self.find_collision_free_neighbours(vertex, vertices_to_check, obs_hand)
                     lowest_cost_neighbour, lowest_cost = self.find_lowest_cost_neighbour(vertex, collision_free_neighbours)
 
-                    if lowest_cost_neighbour.cost + vertex.distance_to(lowest_cost_neighbour) < vertex.cost: 
-                        vertex.parent_vertex = lowest_cost_neighbour
-                        vertex.change_cost(lowest_cost)
-        else:
-            pass
-                        
+                    if vertex.find_cost_from(lowest_cost_neighbour) < vertex.get_cost() and not lowest_cost_neighbour == vertex.parent_vertex: 
+                        vertex.make_edge_with_parent(lowest_cost_neighbour)
 
-
+    
 
 
 

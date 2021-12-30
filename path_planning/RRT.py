@@ -34,14 +34,14 @@ class RRT:
             - Tree
         """
         self.tree = Tree(x_0)
-        q_goal = Vertex(x_goal, 0)
+        q_goal = Vertex(x_goal)
         goal_added_to_tree = False
 
         for i in range(n):
-            q_random = Vertex(rand.uniform(high=self.max_conf_space), 0)
+            q_random = Vertex(rand.uniform(high=self.max_conf_space))
 
             while self.obstacleHandler.point_in_obstacle(q_random.state):
-                q_random = Vertex(rand.uniform(high=self.max_conf_space), 0)
+                q_random = Vertex(rand.uniform(high=self.max_conf_space))
 
             collision_free_neighbours = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
 
@@ -58,6 +58,6 @@ class RRT:
             self.tree.sort(q_goal)
         else:
             self.tree.sort()
-            
+
         return self.tree
     

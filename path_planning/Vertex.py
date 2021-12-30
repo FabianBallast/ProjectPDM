@@ -4,26 +4,27 @@ class Vertex:
     """
     Create a vertex object to perform operations on.
     """
-    def __init__(self, state, cost: float) -> None:
+    def __init__(self, state, root: bool=False) -> None:
         """
         Initialize the vertex with a state and a cost to reach that vertex.
 
         Args:
             - state: Numpy array with 3 elements containing the state.
-            - cost: Cost to reach the state.
+            - root: If this vertex is the root of the tree.
         """
         self.state = state
-        self.cost = cost
+        self.root = root
         self.parent_vertex = None
+        self.child_vertices = []
     
-    def change_cost(self, cost: float) -> None:
+    def get_cost(self) -> float:
         """
-        Update the cost of this vertex.
-
-        Args:
-            - cost: New cost of this vertex.
+        Return the cost to reach this vertex.
         """
-        self.cost = cost
+        if self.root:
+            return 0
+        else:
+            return self.find_cost_from(self.parent_vertex)
     
     def find_cost_from(self, other) -> float:
         """
@@ -32,13 +33,32 @@ class Vertex:
         Args:
             - other: Possible parent vertex.
         """
-        return self.distance_to(other) + other.cost
+        return self.distance_to(other) + other.get_cost()
     
-    def set_parent_vertex(self, parent) -> None:
+    def make_edge_with_parent(self, parent) -> None:
         """
-        Set the cost of its current parent vertex.
+        Make edge with parent. E.g., update child and parent vertices of both vertices.
+
+        Args:
+            - parent: 
         """
-        self.parent_vertex = parent
+
+        if self.parent_vertex is None:
+            self.parent_vertex = parent
+        else:
+            self.parent_vertex.remove_child(self)
+            self.parent_vertex = parent
+
+        parent.child_vertices.append(self)
+
+    def remove_child(self, child) -> None:
+        """
+        Remove a child vertex from the list of children.
+
+        Args:
+            - child: Child vertex to be removed.
+        """ 
+        self.child_vertices.remove(child)
 
     def distance_to(self, other) -> float:
         """
@@ -71,3 +91,12 @@ class Vertex:
         Comparison with ==
         """
         return np.all(self.state == other.state)
+    
+    def __str__(self) -> str:
+        """
+        Print info of Vertex.
+        """
+        if self.parent_vertex is None:
+            return f"Vertex with state: {self.state}, \t cost: {self.get_cost()}, and no parent." 
+        else:
+            return f"Vertex with state: {self.state}, \t cost: {self.get_cost()}, and a parent at {self.parent_vertex.state} with cost {self.parent_vertex.get_cost()}." 

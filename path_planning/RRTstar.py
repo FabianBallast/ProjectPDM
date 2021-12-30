@@ -34,27 +34,25 @@ class RRTstar(RRT):
             - Tree
         """
         self.tree = Tree(x_0)
-        q_goal = Vertex(x_goal, 0)
+        q_goal = Vertex(x_goal)
         goal_added_to_tree = False
 
         for i in range(n):
-            q_random = Vertex(rand.uniform(high=self.max_conf_space), 0)
+            q_random = Vertex(rand.uniform(high=self.max_conf_space))
 
             while self.obstacleHandler.point_in_obstacle(q_random.state):
-                q_random = Vertex(rand.uniform(high=self.max_conf_space), 0)
+                q_random = Vertex(rand.uniform(high=self.max_conf_space))
 
             collision_free_neighbours = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
             
             if len(collision_free_neighbours) > 0:
                 lowest_cost_neighbour, lowest_cost = self.tree.find_lowest_cost_neighbour(q_random, collision_free_neighbours)
                 self.tree.add_vertex(q_random, lowest_cost_neighbour)
-                q_random.change_cost(lowest_cost)
                 self.tree.reroute(q_random, collision_free_neighbours, self.obstacleHandler)
 
                 if not self.obstacleHandler.line_through_obstacles(q_random.state, q_goal.state) and not goal_added_to_tree:
                     print("Goal found!")
                     self.tree.add_vertex(q_goal, q_random)
-                    q_goal.change_cost(q_goal.find_cost_from(q_random))
                     goal_added_to_tree = True
         
         if goal_added_to_tree:
