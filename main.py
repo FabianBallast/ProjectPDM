@@ -1,6 +1,4 @@
-import gym
-from numpy.linalg.linalg import norm
-import env
+import gym, env
 import numpy as np
 from matplotlib import pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
