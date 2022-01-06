@@ -9,10 +9,10 @@ class RRTstar(RRT):
     A class to find a path using RRT*.
     """
 
-    def __init__(self, max_configuration_space, obsHand: ObstacleHandler, seed: int = 4715527):
+    def __init__(self, max_configuration_space, obsHand: ObstacleHandler, seed: int = 4715526):
         """
         Initialize the RRT* with the maximum size of the configuration space.
-        This is in R^3 for now. Furthermore, also add the obstacles.
+        This is in R^4 for now. Furthermore, also add the obstacles.
 
         Args:
             - max_configuration_space: Numpy array with maximum xyz dimensions.
@@ -23,7 +23,7 @@ class RRTstar(RRT):
     def find_path(self, x_0, x_goal, n: int) -> Tree:
         """
         Find the unoptimal path from q_0 to q_goal in a maximum of n steps.
-        For now, all configurations are in R^3 (no yaw, pitch and roll).
+        For now, all configurations are in R^4 (no yaw, pitch and roll).
 
         Args:
             - x_0: Initial state.
@@ -38,16 +38,17 @@ class RRTstar(RRT):
         goal_added_to_tree = False
 
         for i in range(n):
-
             # Find random point not in obstacle
             q_random = Vertex(rand.uniform(high=self.max_conf_space))
-
+            
+            # While point in obstacle, redo
             while self.obstacleHandler.point_in_obstacle(q_random.state):
                 q_random = Vertex(rand.uniform(high=self.max_conf_space))
 
             # Find its neighbours that it can reach
+
             collision_free_neighbours = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
-            
+
             # If any neighbour is reachable, find the lowest cost, add it to the tree and reroute the tree.
             if len(collision_free_neighbours) > 0:
                 lowest_cost_neighbour, lowest_cost = self.tree.find_lowest_cost_neighbour(q_random, collision_free_neighbours)

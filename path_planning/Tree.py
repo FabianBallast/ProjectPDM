@@ -63,7 +63,9 @@ class Tree:
         Returns:
             List with all collision-free neighbours.
         """
-        return [q for q in q_neighbours if not obs_hand.line_through_obstacles(q.state, q_center.state)]
+        q_neighbours_no_time = [q for q in q_neighbours if not obs_hand.line_through_obstacles(q.state, q_center.state)]
+        q_neighbours_with_time = [q for q in q_neighbours_no_time if q.state[3] - q_center.state[3] < 0]
+        return q_neighbours_with_time
 
     def add_vertex(self, q_add, q_connection_point=None) -> None:
         """
@@ -143,10 +145,11 @@ class Tree:
                 vertices_to_check.append(vertex_add)
                 for vertex in vertices_to_check:
                     collision_free_neighbours = self.find_collision_free_neighbours(vertex, vertices_to_check, obs_hand)
-                    lowest_cost_neighbour, lowest_cost = self.find_lowest_cost_neighbour(vertex, collision_free_neighbours)
+                    if len(collision_free_neighbours) > 0:
+                        lowest_cost_neighbour, lowest_cost = self.find_lowest_cost_neighbour(vertex, collision_free_neighbours)
 
-                    if lowest_cost < vertex.get_cost() and not lowest_cost_neighbour == vertex.parent_vertex: 
-                        vertex.make_edge_with_parent(lowest_cost_neighbour)
+                        if lowest_cost < vertex.get_cost() and not lowest_cost_neighbour == vertex.parent_vertex: 
+                            vertex.make_edge_with_parent(lowest_cost_neighbour)
 
     
 

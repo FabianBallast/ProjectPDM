@@ -9,7 +9,7 @@ class Vertex:
         Initialize the vertex with a state and a cost to reach that vertex.
 
         Args:
-            - state: Numpy array with 3 elements containing the state.
+            - state: Numpy array with 4 elements containing the state.
             - root: If this vertex is the root of the tree.
         """
         self.state = state

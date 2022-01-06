@@ -21,7 +21,7 @@ class Obstacle:
         Works for multiple points at the same time on the same object.
 
         Args: 
-            - points: array of shape (N, 3) with the xyz coordinates of N points.
+            - points: array of shape (N, 4) with the xyz coordinates of N points.
 
         Returns:
             Bool: True if in the obstacle.
@@ -58,8 +58,8 @@ class Obstacle:
                       [[-1,  1, -1], [-1,  1,  1], [ 1,  1,  1], [ 1,  1, -1]],
                       [[-1,  1,  1], [-1, -1,  1], [ 1, -1,  1], [ 1,  1,  1]]]).astype(float)
         
-        X *= self.dimensions/2
-        X += np.array(self.position)
+        X *= self.dimensions[0:3]/2
+        X += np.array(self.position[0:3])
         axes.add_collection3d(Poly3DCollection(X, facecolors=self.rgba, edgecolors = 'k'))
 
 class Shelf(Obstacle):
@@ -72,13 +72,13 @@ class Shelf(Obstacle):
         Pass the static position and dimensions to the object when initializing.
 
         Args:
-            - position: array of size 3 in the order xyz of the center of the obstacle.
-            - dimensions: array of size 3 with the length of the obstacle in dimensions xyz. 
+            - position: array of size 4 in the order xyzt of the center of the obstacle.
+            - dimensions: array of size 4 with the length of the obstacle in dimensions xyzt. 
         """
         self.position = position
         self.dimensions = dimensions
-        self.safety_region = np.array([0.25, 0.25, 0.25])
-        self.rgba = (1, 0, 0, 0.25)
+        self.safety_region = np.array([0.25, 0.25, 0.25, 0.1]) #Added safety for time
+        self.rgba = (0, 0, 1, 0.20)
 
 
 
@@ -92,7 +92,12 @@ class Forklift(Obstacle):
         Pass the dynamic position over time and dimensions to the object when initializing.
 
         Args:
-            - position: array of size 3 in the order xyz of the center of the obstacle.
-            - dimensions: array of size 3 with the length of the obstacle in dimensions xyz. # Change
+            - position: array of size 4 in the order xyzt of the center of the obstacle.
+            - dimensions: array of size 4 with the length of the obstacle in dimensions xyzt. # Change
         """
+        self.position = position
+        self.dimensions = dimensions
+        self.safety_region = np.array([0.25, 0.25, 0.25, 0.1]) #Added safety for time
+        self.rgba = (0, 1, 0, 0.20)
+        
         pass

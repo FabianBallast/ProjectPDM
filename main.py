@@ -5,46 +5,90 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from matplotlib import animation
 from obstacles.ObstacleHandler import ObstacleHandler
 from obstacles.Obstacle import Shelf
+from obstacles.Obstacle import Forklift
 from path_planning.RRT import RRT
 from path_planning.RRTstar import RRTstar
 from util.traj_from_line import point_from_traj
 import geom_controller as cont # Best performing
 
 ### Start and goal
-start = np.array([9,9,1])
-goal = np.array([1,1,9])
+endOfTime = 25
+start = np.array([9,9,1,0])
+goal = np.array([1,1,9,endOfTime])
+fast_obst = True #Options: True and False. 
 
-### Temporary obstacles
-ob1 = Shelf(np.array([3,4,5]), np.array([2,8,10]))
+obs_list = []
+### Static obstacles
+# First array indicates the positon, second array the size of the shelf
+sob1 = Shelf(np.array([3,4,5,endOfTime/2]), np.array([2,8,10,endOfTime])) # Added start_time and max_time
 # ob2 = Shelf(np.array([7,6,5]), np.array([2,8,10])) Simple shelf
 
-# Shelf with hole
-ob2 = Shelf(np.array([7,6,1.5]), np.array([2,8,3]))
-ob3 = Shelf(np.array([7,6,8.5]), np.array([2,8,3]))
-ob4 = Shelf(np.array([7,8.5,5]), np.array([2,3,4]))
-ob5 = Shelf(np.array([7,3.5,5]), np.array([2,3,4]))
-obHand = ObstacleHandler([ob1, ob2, ob3, ob4, ob5])
+# Shelf with hole, made up of 4 seperate shelfs
+# First array indicates the positon, second array the size of the shelf
+sob2 = Shelf(np.array([7,6,1.5,endOfTime/2]), np.array([2,8,3,endOfTime])) # Added mid_time and max_time
+sob3 = Shelf(np.array([7,6,8.5,endOfTime/2]), np.array([2,8,3,endOfTime])) # Added mid_time and max_time
+sob4 = Shelf(np.array([7,8.5,5,endOfTime/2]), np.array([2,3,4,endOfTime])) # Added mid_time and max_time
+sob5 = Shelf(np.array([7,3.5,5,endOfTime/2]), np.array([2,3,4,endOfTime])) # Added mid_time and max_time
+
+sobs_list = [sob1, sob2, sob3, sob4, sob5]
+
+### Add Dynamic obstacles, can be expressed as static obstacles in the xyzt space,
+if fast_obst:
+    state_begin = np.array([5,9,4])
+    state_end = np.array([5,1,4])
+    time_begin = 1
+    time_end = 25
+else:
+    state_begin = np.array([5,9,4])
+    state_end = np.array([5,7,4])
+    time_begin = 11
+    time_end = 15
+block_size = np.array([1,2,8])
+
+# Block before movement
+dob1 = Forklift(np.append(state_begin,time_begin/2), np.append(block_size,time_begin)) 
+# Block after movement
+dob2 = Forklift(np.append(state_end,(endOfTime + time_end)/2), np.append(block_size,endOfTime - time_end))
+# Block during movement
+dobs_list = [dob1, dob2]
+# find minimum number of blocks for approximation
+vector_to_travel = state_end-state_begin
+time_to_travel = time_end - time_begin
+velocity_vector = np.abs(vector_to_travel)/time_to_travel
+time_per_block = np.max(block_size[velocity_vector!= 0]/velocity_vector[velocity_vector!= 0])
+minimum_blocks = np.ceil(np.max(np.abs(vector_to_travel)/block_size))
+approximation_range = int(minimum_blocks*2)
+for i in range(approximation_range+1):
+    state = state_begin + (i/approximation_range)*vector_to_travel
+    time  = time_begin + (i/approximation_range)*time_to_travel
+    ob = Forklift(np.append(state_end,time), np.append(block_size,time_per_block))
+    dobs_list.append(ob)
+
+# Save all obstacles in ObstacleHandler
+obHand = ObstacleHandler(sobs_list + dobs_list)
 
 # ### Grid for obstacle detection test
 # x, y, z = np.meshgrid(np.linspace(0, 10, 6), np.linspace(0, 10, 6), np.linspace(0, 10, 6))
 
-### Pick one
-# path = RRT(np.array([10, 10, 10]), obHand)
-path = RRTstar(np.array([10, 10, 10]), obHand)
+### Pick one of the path planning methods
+# The first array indicates the max configuration space, the second represents the obstacles
+# path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
+path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
 
-tree = path.find_path(start, goal, 200)
+tree = path.find_path(start, goal, 500)
 curr_goal_ind = 1
 curr_goal = tree.sorted_vertices[curr_goal_ind].state
 past_goal = tree.sorted_vertices[curr_goal_ind - 1].state
 t0 = 0
-timeToNode = 5
+timeToNode = curr_goal[3] - past_goal[3]  # Time is now determined by the state and no longer constant
 
 env = gym.make('Quadrotor-v0')
-current_state = env.reset(position=start)
+current_state = env.reset(position=start[0:3])
 controller = cont.controlller()
 
 # print("current:", current_state)
-dt = 0.01
+dt_fraction = 400
+dt = timeToNode/dt_fraction #Variable, dt is now determined by fraction of the timeToNode
 t = 0
 
 real_trajectory = {'x': [], 'y': [], 'z': []}
@@ -52,8 +96,9 @@ des_trajectory = {'x': [], 'y': [], 'z': []}
 
 final_goal_reached = False
 while not final_goal_reached:
-    trajec = point_from_traj(past_goal, curr_goal, t0+timeToNode, t, t0)
-    trajectory_goal = [trajec[0], trajec[1], trajec[2], 0, 0]
+    trajec = point_from_traj(past_goal[0:3], curr_goal[0:3], t0+timeToNode, t, t0)
+    # Added the [0:3] to only take x, y and z
+    trajectory_goal = [trajec[0][0:3], trajec[1][0:3], trajec[2][0:3], 0, 0]
     control_input = controller.control(trajectory_goal, current_state)
     obs, reward, done, info = env.step(control_input['cmd_motor_speeds'])
 
@@ -65,20 +110,23 @@ while not final_goal_reached:
     des_trajectory['y'].append(trajectory_goal[0][1])
     des_trajectory['z'].append(trajectory_goal[0][2])
     current_state = obs
-
+    # Update time 
     t += dt
-
-    if np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.01 and np.all(curr_goal == goal):
+    # Check if goal is reached
+    if np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal[0:3]) < 0.01 and np.all(curr_goal == goal):
         print("Done!")
         final_goal_reached = True
         break
-    elif np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal) < 0.25 and not np.all(curr_goal == goal):
+    # Check if close enough to current_goal to change direction to new goal
+    elif np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal[0:3]) < 0.25 and not np.all(curr_goal == goal):
         curr_goal_ind += 1
         past_goal = curr_goal
+        # print(curr_goal)
         curr_goal = tree.sorted_vertices[curr_goal_ind].state
+        timeToNode = curr_goal[3] - past_goal[3]
+        dt = timeToNode/dt_fraction #Variable, dt is determined by fraction of the timeToNode
         t0 = t
-
-
+#%%
 fig = plt.figure()
 ax1 = p3.Axes3D(fig, auto_add_to_figure=False) # 3D place for drawing
 fig.add_axes(ax1)
@@ -98,7 +146,7 @@ ax1.set_xlim3d(0, 10)
 ax1.set_ylim3d(0, 10)
 ax1.set_zlim3d(0, 10)
 ax1.set_title('3D animate')
-ax1.view_init(40, 40)
+ax1.view_init(90, 90)
 
 # Plot obstacles to test placement
 obHand.plot_obstacles(ax1)
