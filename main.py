@@ -15,7 +15,7 @@ import geom_controller as cont # Best performing
 endOfTime = 25
 start = np.array([9,9,1,0])
 goal = np.array([1,1,9,endOfTime])
-fast_obst = True #Options: True and False. 
+fast_obst = False #Options: True and False. 
 
 obs_list = []
 ### Static obstacles
@@ -36,8 +36,8 @@ sobs_list = [sob1, sob2, sob3, sob4, sob5]
 if fast_obst:
     state_begin = np.array([5,9,4])
     state_end = np.array([5,1,4])
-    time_begin = 1
-    time_end = 25
+    time_begin = 5
+    time_end = 20
 else:
     state_begin = np.array([5,9,4])
     state_end = np.array([5,7,4])
@@ -58,11 +58,17 @@ velocity_vector = np.abs(vector_to_travel)/time_to_travel
 time_per_block = np.max(block_size[velocity_vector!= 0]/velocity_vector[velocity_vector!= 0])
 minimum_blocks = np.ceil(np.max(np.abs(vector_to_travel)/block_size))
 approximation_range = int(minimum_blocks*2)
-for i in range(approximation_range+1):
+for i in range(approximation_range):
     state = state_begin + (i/approximation_range)*vector_to_travel
     time  = time_begin + (i/approximation_range)*time_to_travel
-    ob = Forklift(np.append(state_end,time), np.append(block_size,time_per_block))
+    ob = Forklift(np.append(state,time), np.append(block_size,time_per_block))
     dobs_list.append(ob)
+
+# Sort the dynamic obstacles by time
+dobs_list.sort(key = lambda obs : obs.position[3])
+
+# for obs in dobs_list:
+#     print(obs.position)
 
 # Save all obstacles in ObstacleHandler
 obHand = ObstacleHandler(sobs_list + dobs_list)
@@ -76,6 +82,8 @@ obHand = ObstacleHandler(sobs_list + dobs_list)
 path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
 
 tree = path.find_path(start, goal, 500)
+# for node in tree.sorted_vertices:
+#     print("node.state: ",node.state)
 curr_goal_ind = 1
 curr_goal = tree.sorted_vertices[curr_goal_ind].state
 past_goal = tree.sorted_vertices[curr_goal_ind - 1].state
@@ -126,6 +134,9 @@ while not final_goal_reached:
         timeToNode = curr_goal[3] - past_goal[3]
         dt = timeToNode/dt_fraction #Variable, dt is determined by fraction of the timeToNode
         t0 = t
+    elif(t>endOfTime):
+        raise ValueError("Beyond simulation time reached, trajectory following failed")
+
 #%%
 fig = plt.figure()
 ax1 = p3.Axes3D(fig, auto_add_to_figure=False) # 3D place for drawing
@@ -137,6 +148,7 @@ des_trajectory['x'] = np.array(des_trajectory['x'])
 des_trajectory['y'] = np.array(des_trajectory['y'])
 des_trajectory['z'] = np.array(des_trajectory['z'])
 point, = ax1.plot([real_trajectory['x'][0]], [real_trajectory['y'][0]], [real_trajectory['z'][0]], 'co', label='Quadrotor')
+fork = ax1.add_collection3d(dobs_list[0].get_plot_obstacle())
 line, = ax1.plot([real_trajectory['x'][0]], [real_trajectory['y'][0]], [real_trajectory['z'][0]], label='Real_Trajectory')
 lineRef, = ax1.plot([des_trajectory['x'][0]], [des_trajectory['y'][0]], [des_trajectory['z'][0]], label='Desired_Trajectory')
 ax1.set_xlabel('x')
@@ -146,7 +158,9 @@ ax1.set_xlim3d(0, 10)
 ax1.set_ylim3d(0, 10)
 ax1.set_zlim3d(0, 10)
 ax1.set_title('3D animate')
+# ax1.view_init(20, -16)
 ax1.view_init(90, 90)
+# ax1.view_init(44, -20)
 
 # Plot obstacles to test placement
 obHand.plot_obstacles(ax1)
@@ -162,6 +176,20 @@ obHand.plot_obstacles(ax1)
 tree.plot_tree(ax1)
 ax1.legend(loc='lower right')
 
+# Animate moving objects
+anim_len = len(real_trajectory['x'])
+# Forklift moves in straight line, detailed manual path gen for smooth animation
+def forklift_path(i):
+    anim_percent = i/anim_len # Proportion of animation completed
+    sim_i = anim_percent*endOfTime # Simulated time
+    if(sim_i < dob1.position[3]):
+        return dob1.position[0:3]
+    elif (sim_i < dob2.position[3]):
+        return dob1.position[0:3] + (sim_i - dob1.position[3])*(dob2.position[0:3]-dob1.position[0:3])/ \
+            (dob2.position[3]-dob1.position[3])
+    else:
+        return dob2.position[0:3]
+
 def animate(i):
     line.set_xdata(real_trajectory['x'][:i + 1])
     line.set_ydata(real_trajectory['y'][:i + 1])
@@ -172,14 +200,27 @@ def animate(i):
     point.set_xdata([real_trajectory['x'][i]])
     point.set_ydata([real_trajectory['y'][i]])
     point.set_3d_properties([real_trajectory['z'][i]])
-
-    return line, lineRef, point
+    fork_pos = forklift_path(i)
+    fork_temp = Forklift(np.append(fork_pos,0), np.append(block_size,0))
+    fork.set_verts(fork_temp.get_obs_verts())
+    try:
+        fork.do_3d_projection() # Results in a warning, but does not work without this
+    except:
+        pass # Just ignore the warning without log
+    
+    return line, lineRef, point, fork
 
 ani = animation.FuncAnimation(fig=fig,
                               func=animate,
-                              frames=len(real_trajectory['x']),
-                              interval=dt*1000,
+                              frames=anim_len,
+                              interval=dt*500,
                               repeat=False,
                               blit=True)
 
 plt.show()
+
+# print("Saving animation ... (takes a minute or so)")
+# f = r"./animation.gif" 
+# writergif = animation.PillowWriter(fps=30) 
+# ani.save(f, writer=writergif)
+# print("Saved animation!")

@@ -1,4 +1,5 @@
 from obstacles.Obstacle import Obstacle
+import numpy as np
 
 class ObstacleHandler:
     """
@@ -68,4 +69,18 @@ class ObstacleHandler:
             axes: axes to plot the obstacle onto.
         """
         for obstacle in self.obstacleList:
-            obstacle.plot_obstacle(axes)
+            if (not obstacle.dynamic):
+                obstacle.plot_obstacle(axes)
+
+    
+    def get_dynamic_obstacles(self) -> np.array:
+        """
+        Plot all obstacles onto the axes.
+
+        Args:
+            axes: axes to plot the obstacle onto.
+        """
+        dynamic_list = np.array([])
+        for obstacle in self.obstacleList:
+            if (obstacle.dynamic):
+                np.append(dynamic_list, obstacle)

@@ -1,5 +1,6 @@
 import numpy as np
 from path_planning.Vertex import Vertex
+
 class Tree:
     """
     Create a tree to perform operations on.
@@ -107,8 +108,8 @@ class Tree:
         Args: 
             - axes: Axes to plot the tree onto.
         """
-        for vertex in self.vertices:
-            vertex.draw_edge_to_parent(axes)
+        # for vertex in self.vertices:
+        #     vertex.draw_edge_to_parent(axes)
         
         path_taken = np.asarray([vertex.state for vertex in self.sorted_vertices])
         axes.plot(path_taken[:, 0], path_taken[:, 1], path_taken[:, 2], 'go-', zorder=2, label="Path")

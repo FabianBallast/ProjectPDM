@@ -14,6 +14,7 @@ class Obstacle:
         self.dimensions = None
         self.safety_region = None
         self.rgba = None
+        self.dynamic = None
     
     def point_in_obstacle(self, points) -> bool:
         """
@@ -44,6 +45,41 @@ class Obstacle:
         points = np.linspace(q0, q1, n)
         return self.point_in_obstacle(points)
     
+    def get_obs_verts(self) -> np.array:
+        """
+        Get the shape of the obstacle to plot. Assumes a rectangular cuboid.
+
+        Args:
+            axes: axes to plot the obstacle onto.
+        """
+        X = np.array([[[-1,  1, -1], [-1, -1, -1], [ 1, -1, -1], [ 1,  1, -1]],
+                      [[-1, -1, -1], [-1, -1,  1], [ 1, -1,  1], [ 1, -1, -1]],
+                      [[ 1, -1,  1], [ 1, -1, -1], [ 1,  1, -1], [ 1,  1,  1]],
+                      [[-1, -1,  1], [-1, -1, -1], [-1,  1, -1], [-1,  1,  1]],
+                      [[-1,  1, -1], [-1,  1,  1], [ 1,  1,  1], [ 1,  1, -1]],
+                      [[-1,  1,  1], [-1, -1,  1], [ 1, -1,  1], [ 1,  1,  1]]]).astype(float)
+        
+        X *= self.dimensions[0:3]/2
+        return X + np.array(self.position[0:3])
+
+    def get_plot_obstacle(self) -> Poly3DCollection:
+        """
+        Get the shape of the obstacle to plot. Assumes a rectangular cuboid.
+
+        Args:
+            axes: axes to plot the obstacle onto.
+        """
+        X = np.array([[[-1,  1, -1], [-1, -1, -1], [ 1, -1, -1], [ 1,  1, -1]],
+                      [[-1, -1, -1], [-1, -1,  1], [ 1, -1,  1], [ 1, -1, -1]],
+                      [[ 1, -1,  1], [ 1, -1, -1], [ 1,  1, -1], [ 1,  1,  1]],
+                      [[-1, -1,  1], [-1, -1, -1], [-1,  1, -1], [-1,  1,  1]],
+                      [[-1,  1, -1], [-1,  1,  1], [ 1,  1,  1], [ 1,  1, -1]],
+                      [[-1,  1,  1], [-1, -1,  1], [ 1, -1,  1], [ 1,  1,  1]]]).astype(float)
+        
+        X *= self.dimensions[0:3]/2
+        X += np.array(self.position[0:3])
+        return Poly3DCollection(X, facecolors=self.rgba, edgecolors = 'k')
+
     def plot_obstacle(self, axes) -> None:
         """
         Plot this obstacle onto the axes. Assumes a rectangular cuboid.
@@ -79,6 +115,7 @@ class Shelf(Obstacle):
         self.dimensions = dimensions
         self.safety_region = np.array([0.25, 0.25, 0.25, 0.1]) #Added safety for time
         self.rgba = (0, 0, 1, 0.20)
+        self.dynamic = False
 
 
 
@@ -99,5 +136,6 @@ class Forklift(Obstacle):
         self.dimensions = dimensions
         self.safety_region = np.array([0.25, 0.25, 0.25, 0.1]) #Added safety for time
         self.rgba = (0, 1, 0, 0.20)
+        self.dynamic = True
         
         pass
