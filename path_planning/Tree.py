@@ -144,13 +144,13 @@ class Tree:
                 
                 # Check all vertices for rerouting, and add default vertex to end to recheck that one at the end.
                 vertices_to_check.append(vertex_add)
-                for vertex in vertices_to_check:
-                    collision_free_neighbours = self.find_collision_free_neighbours(vertex, vertices_to_check, obs_hand)
-                    if len(collision_free_neighbours) > 0:
-                        lowest_cost_neighbour, lowest_cost = self.find_lowest_cost_neighbour(vertex, collision_free_neighbours)
+            for vertex in vertices_to_check:
+                collision_free_neighbours = self.find_collision_free_neighbours(vertex, vertices_to_check, obs_hand)
+                if len(collision_free_neighbours) > 0:
+                    lowest_cost_neighbour, lowest_cost = self.find_lowest_cost_neighbour(vertex, collision_free_neighbours)
 
-                        if lowest_cost < vertex.get_cost() and not lowest_cost_neighbour == vertex.parent_vertex: 
-                            vertex.make_edge_with_parent(lowest_cost_neighbour)
+                    if lowest_cost < vertex.get_cost() and not lowest_cost_neighbour == vertex.parent_vertex: 
+                        vertex.make_edge_with_parent(lowest_cost_neighbour)
 
     
 
