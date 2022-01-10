@@ -46,14 +46,15 @@ class RRTstar(RRT):
                 q_random = Vertex(rand.uniform(high=self.max_conf_space))
 
             # Find its neighbours that it can reach
-
-            collision_free_neighbours = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
+            q_neighbours, collision_free_neighbours, q_neighbours_after_current = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
 
             # If any neighbour is reachable, find the lowest cost, add it to the tree and reroute the tree.
             if len(collision_free_neighbours) > 0:
                 lowest_cost_neighbour, lowest_cost = self.tree.find_lowest_cost_neighbour(q_random, collision_free_neighbours)
                 self.tree.add_vertex(q_random, lowest_cost_neighbour)
-                self.tree.reroute(q_random, collision_free_neighbours, self.obstacleHandler)
+                # Now use all neighbours for rerouting
+                self.tree.reroute(q_random, q_neighbours, self.obstacleHandler)
+
 
                 if not self.obstacleHandler.line_through_obstacles(q_random.state, q_goal.state) and not goal_added_to_tree:
                     print("Goal found!")

@@ -64,9 +64,11 @@ class Tree:
         Returns:
             List with all collision-free neighbours.
         """
-        q_neighbours_no_time = [q for q in q_neighbours if not obs_hand.line_through_obstacles(q.state, q_center.state)]
-        q_neighbours_with_time = [q for q in q_neighbours_no_time if q.state[3] - q_center.state[3] < 0]
-        return q_neighbours_with_time
+        q_neighbours = [q for q in q_neighbours if not obs_hand.line_through_obstacles(q.state, q_center.state)]
+        q_neighbours_before_current = [q for q in q_neighbours if q.state[3] - q_center.state[3] < 0]
+        q_neighbours_after_current = [q for q in q_neighbours if q.state[3] - q_center.state[3] > 0]
+
+        return q_neighbours, q_neighbours_before_current, q_neighbours_after_current
 
     def add_vertex(self, q_add, q_connection_point=None) -> None:
         """
@@ -133,11 +135,12 @@ class Tree:
 
         # Check the vertices that are within this radius
         vertices_to_check = [vertex for vertex in neighbours if vertex_add.distance_to(vertex) <= radius]
+        vertices_to_check_before_current = [vertex for vertex in vertices_to_check if vertex_add.state[3] - vertex.state[3] > 0]
 
-        if len(vertices_to_check) > 0:
+        if len(vertices_to_check_before_current) > 0:
             
-            closest_neighbour = self.find_closest_neighbour(vertex_add, vertices_to_check)
-            lowest_cost_neighbour, _ = self.find_lowest_cost_neighbour(vertex_add, vertices_to_check)
+            closest_neighbour = self.find_closest_neighbour(vertex_add, vertices_to_check_before_current)
+            lowest_cost_neighbour, _ = self.find_lowest_cost_neighbour(vertex_add, vertices_to_check_before_current)
 
             # If the lowest cost neighbour is different from the closest, rerouting might be needed. Otherwise, it is a general addition.
             if not lowest_cost_neighbour == closest_neighbour:
@@ -145,7 +148,8 @@ class Tree:
                 # Check all vertices for rerouting, and add default vertex to end to recheck that one at the end.
                 vertices_to_check.append(vertex_add)
             for vertex in vertices_to_check:
-                collision_free_neighbours = self.find_collision_free_neighbours(vertex, vertices_to_check, obs_hand)
+                # For each vertex only check the ones which are earlier in time.
+                q_neighbours, collision_free_neighbours, q_neighbours_after_current = self.find_collision_free_neighbours(vertex, vertices_to_check, obs_hand)
                 if len(collision_free_neighbours) > 0:
                     lowest_cost_neighbour, lowest_cost = self.find_lowest_cost_neighbour(vertex, collision_free_neighbours)
 
