@@ -80,8 +80,8 @@ obHand = ObstacleHandler(sobs_list + dobs_list)
 
 ### Pick one of the path planning methods
 # The first array indicates the max configuration space, the second represents the obstacles
-# path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
-path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
+path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
+# path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
 
 tree = path.find_path(start, goal, 500)
 # for node in tree.sorted_vertices:

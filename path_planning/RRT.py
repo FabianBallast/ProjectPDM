@@ -47,7 +47,7 @@ class RRT:
 
             # Find its neighbours that it can reach
             # Take care that you can only move in positive time...
-            collision_free_neighbours = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
+            _, collision_free_neighbours, _ = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
 
             # If any neighbour is reachable, find the closest, add it to the tree and check if the goal can be reached from there.
             if len(collision_free_neighbours) > 0:
