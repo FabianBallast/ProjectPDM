@@ -9,10 +9,12 @@ from obstacles.Obstacle import Forklift
 from path_planning.RRT import RRT
 from path_planning.RRTstar import RRTstar
 from util.traj_from_line import point_from_traj
-import geom_controller as cont # Best performing
+import geom_controller as cont 
+from path_planning.TrajectoryOptimization import find_kinodynamic_trajectory, create_trajectory_from_vertices
+from path_planning.Trajectory import plot_trajectories
 
 ### Start and goal
-endOfTime = 25
+endOfTime = 30
 start = np.array([9,9,1,0])
 goal = np.array([1,1,9,endOfTime])
 fast_obst = False #Options: True and False. 
@@ -94,9 +96,17 @@ env = gym.make('Quadrotor-v0')
 current_state = env.reset(position=start[0:3])
 controller = cont.controlller()
 
+## Create optimized trajectories
+curr_path_index = 0
+t0 = 0
+smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices)
+t_end = t_traj[1]
+# print(t_traj)
+
 # print("current:", current_state)
 dt_fraction = 400
-dt = timeToNode/dt_fraction #Variable, dt is now determined by fraction of the timeToNode
+# dt = timeToNode/dt_fraction #Variable, dt is now determined by fraction of the timeToNode
+dt = 0.01
 t = 0
 
 real_trajectory = {'x': [], 'y': [], 'z': []}
@@ -104,9 +114,14 @@ des_trajectory = {'x': [], 'y': [], 'z': []}
 
 final_goal_reached = False
 while not final_goal_reached:
-    trajec = point_from_traj(past_goal[0:3], curr_goal[0:3], t0+timeToNode, t, t0)
+    trajec_x = smooth_path[0][curr_path_index].evaluate_track(t)
+    trajec_y = smooth_path[1][curr_path_index].evaluate_track(t)
+    trajec_z = smooth_path[2][curr_path_index].evaluate_track(t)
+
     # Added the [0:3] to only take x, y and z
-    trajectory_goal = [trajec[0][0:3], trajec[1][0:3], trajec[2][0:3], 0, 0]
+    trajectory_goal = [np.asarray([trajec_x[0], trajec_y[0], trajec_z[0]]), \
+                       np.asarray([trajec_x[1], trajec_y[1], trajec_z[1]]), \
+                       np.asarray([trajec_x[2], trajec_y[2], trajec_z[2]]), 0, 0]
     control_input = controller.control(trajectory_goal, current_state)
     obs, reward, done, info = env.step(control_input['cmd_motor_speeds'])
 
@@ -132,10 +147,25 @@ while not final_goal_reached:
         # print(curr_goal)
         curr_goal = tree.sorted_vertices[curr_goal_ind].state
         timeToNode = curr_goal[3] - past_goal[3]
-        dt = timeToNode/dt_fraction #Variable, dt is determined by fraction of the timeToNode
+        # dt = timeToNode/dt_fraction #Variable, dt is determined by fraction of the timeToNode
         t0 = t
+    elif t > t_traj[-1]:
+        print("Reached goal!")
+        break
+    elif t > t_end:
+        curr_path_index += 1
+        t_end = t_traj[curr_path_index+1]
     elif(t>endOfTime):
-        raise ValueError("Beyond simulation time reached, trajectory following failed")
+        # raise ValueError("Beyond simulation time reached, trajectory following failed")
+        print("Beyond simulation time reached, trajectory following failed")
+        break
+
+print(f"Reached goal in {t} s.")
+
+plt.figure()
+plt.plot(des_trajectory['x'])
+plt.plot(des_trajectory['y'])
+plt.plot(des_trajectory['z'])
 
 #%%
 fig = plt.figure()
@@ -213,7 +243,7 @@ def animate(i):
 ani = animation.FuncAnimation(fig=fig,
                               func=animate,
                               frames=anim_len,
-                              interval=dt*500,
+                              interval=dt*1000,
                               repeat=False,
                               blit=True)
 
