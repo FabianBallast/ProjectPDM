@@ -58,6 +58,7 @@ class RRT:
                     print("Goal found!")
                     self.tree.add_vertex(q_goal, q_random)
                     goal_added_to_tree = True
+                    break
         
         # Sort the tree such that we know the path from start to end.
         if goal_added_to_tree:
