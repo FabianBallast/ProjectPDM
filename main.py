@@ -16,7 +16,7 @@ from path_planning.Trajectory import plot_trajectories
 ### Start and goal
 endOfTime = 30
 fast_obst = True # Options: True and False. 
-kinodynamic = False # Use kinodynamic RRT* extention (use with RRTstar)
+kinodynamic = True # Use kinodynamic RRT* extention (use with RRTstar)
 environment = 2 # 0, 1 or 2, for different environments
 # Each environment has one moving forklift and a number of static shelves
 

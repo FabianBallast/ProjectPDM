@@ -86,6 +86,20 @@ class Vertex:
                       [self.state[1], self.parent_vertex.state[1]], 
                       [self.state[2], self.parent_vertex.state[2]], draw_type, zorder=zorder)
 
+    def distance_to_root(self) -> float:
+        """
+        Draw the edge from this vertex to parent vertex.
+
+        Args:
+            - axes: Axes to plot the axes onto.
+            - draw_type: How to draw the edge. Color, line style etc.
+            - zorder: At which level to draw the edge. 
+        """
+        if self.parent_vertex is not None:
+            cost = np.linalg.norm(self.state[0:3] - self.parent_vertex.state[0:3])
+            return self.get_cost() + self.parent_vertex.distance_to_root()
+        return 0
+
     def __eq__(self, other) -> bool:
         """
         Comparison with ==
