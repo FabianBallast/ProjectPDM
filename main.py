@@ -80,8 +80,8 @@ obHand = ObstacleHandler(sobs_list + dobs_list)
 
 ### Pick one of the path planning methods
 # The first array indicates the max configuration space, the second represents the obstacles
-path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
-# path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
+# path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
+path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
 
 tree = path.find_path(start, goal, 500)
 # for node in tree.sorted_vertices:
@@ -189,8 +189,9 @@ ax1.set_ylim3d(0, 10)
 ax1.set_zlim3d(0, 10)
 ax1.set_title('3D animate')
 # ax1.view_init(20, -16)
-ax1.view_init(90, 90)
+# ax1.view_init(90, 90)
 # ax1.view_init(44, -20)
+ax1.view_init(44, 20)
 
 # Plot obstacles to test placement
 obHand.plot_obstacles(ax1)
@@ -221,6 +222,7 @@ def forklift_path(i):
         return dob2.position[0:3]
 
 def animate(i):
+    i *= 10
     line.set_xdata(real_trajectory['x'][:i + 1])
     line.set_ydata(real_trajectory['y'][:i + 1])
     line.set_3d_properties(real_trajectory['z'][:i + 1])
@@ -242,15 +244,15 @@ def animate(i):
 
 ani = animation.FuncAnimation(fig=fig,
                               func=animate,
-                              frames=anim_len,
-                              interval=dt*1000,
+                              frames=int(anim_len/10),
+                              interval=33,
                               repeat=False,
-                              blit=True)
+                              blit=False)
 
 plt.show()
 
 # print("Saving animation ... (takes a minute or so)")
-# f = r"./animation.gif" 
-# writergif = animation.PillowWriter(fps=30) 
-# ani.save(f, writer=writergif)
+# f = r"./animation_side_kino_2.gif" 
+# writergif = animation.PillowWriter(fps=200) 
+# ani.save(f, writer='imagemagick', fps=30)
 # print("Saved animation!")
