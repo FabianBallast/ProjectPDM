@@ -298,10 +298,11 @@ def find_times_single(topic):
 
     return t1, t2
 
-def create_trajectory_from_vertices(vertices):
+def create_trajectory_from_vertices(vertices, optimize=True):
     temp_path = [[], [], []]
     smooth_path = [[], [], []]
     t_complete = [0]
+    t_temp = [0]
     t0 = 0
 
     for vertex in vertices[1:]:
@@ -311,11 +312,15 @@ def create_trajectory_from_vertices(vertices):
         x_traj, y_traj, z_traj = find_kinodynamic_trajectory(start, end, t0)
         t_end_traj = x_traj.t0 + x_traj.target_time
         t0 = t_end_traj
+        t_temp.append(t_end_traj)
         
         temp_path[0].append(x_traj)
         temp_path[1].append(y_traj)
         temp_path[2].append(z_traj)
     
+    if not optimize:
+        return temp_path, t_temp
+
     for idx in range(len(temp_path[0][:-1])):
         curr_path_x = temp_path[0][idx]
         curr_path_y = temp_path[1][idx]
@@ -330,7 +335,7 @@ def create_trajectory_from_vertices(vertices):
     
         # x1 = t_cross - 1.5
         # x2 = min(t_cross + 1.3, (t_cross + t_end) / 2)
-        ratio = 0.3
+        ratio = 0.37
         x1 = t_cross - min((t_cross-t0) * ratio, 2)
         x2 = t_cross + min((t_end-t_cross) * ratio, 2)
         # print(x1, x2)
@@ -358,7 +363,6 @@ def create_trajectory_from_vertices(vertices):
         x_traj2, y_traj2, z_traj2 = find_kinodynamic_trajectory(state1, state2, t1_end)
         # plot_trajectories([x_traj2, y_traj2, z_traj2]) 
         t2_end = x_traj2.t0 + x_traj2.target_time
-        plt.show()
         
 
         if idx + 2 == len(temp_path[0]):

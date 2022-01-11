@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 vmax = 1.5
 amax = 3
-jmax = 20
-smax = 40
+jmax = 8
+smax = 50
 
 crit_value = jmax**2/smax
 

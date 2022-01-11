@@ -118,7 +118,7 @@ class Tree:
         axes.plot([path_taken[ 0][0]], [path_taken[ 0][1]], [path_taken[ 0][2]], 'bo', zorder=3, label="Start")
         axes.plot([path_taken[-1][0]], [path_taken[-1][1]], [path_taken[-1][2]], 'yo', zorder=3, label="End")
 
-    def reroute(self, vertex_add, neighbours, obs_hand, gamma=5) -> None:
+    def reroute(self, vertex_add, neighbours, obs_hand, gamma=10) -> None:
         """
         Reroute the tree after adding a vertex. 
 

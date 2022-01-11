@@ -14,9 +14,9 @@ from path_planning.TrajectoryOptimization import find_kinodynamic_trajectory, cr
 from path_planning.Trajectory import plot_trajectories
 
 ### Start and goal
-endOfTime = 30
+endOfTime = 21
 fast_obst = True # Options: True and False. 
-kinodynamic = True # Use kinodynamic RRT* extention (use with RRTstar)
+kinodynamic = False # Use kinodynamic RRT* extention (use with RRTstar)
 environment = 1 # 0, 1 or 2, for different environments
 # Each environment has one moving forklift and a number of static shelves
 
@@ -132,8 +132,8 @@ obHand = ObstacleHandler(sobs_list + dobs_list)
 
 ### Pick one of the path planning methods
 # The first array indicates the max configuration space, the second represents the obstacles
-# path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
-path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
+path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
+# path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
 
 tree = path.find_path(start, goal, 500)
 print("Path found!")
@@ -182,58 +182,12 @@ while not final_goal_reached:
     # Update time 
     t += dt
     # Check if goal is reached
-    if t > t_traj[-1]:
-        pass
-        # print("Reached goal!")
-        # break
-    elif t > t_end:
-        curr_path_index += 1
-        t_end = t_traj[curr_path_index+1]
-    elif(t>endOfTime):
+    if t > endOfTime:
         print("Simulation time reached")
         break
-# else:
-#     dt_fraction = 400
-#     dt = timeToNode/dt_fraction #Variable, dt is now determined by fraction of the timeToNode
-#     t = 0
-
-#     real_trajectory = {'x': [], 'y': [], 'z': []}
-#     des_trajectory = {'x': [], 'y': [], 'z': []}
-
-#     final_goal_reached = False
-#     while not final_goal_reached:
-#         trajec = point_from_traj(past_goal[0:3], curr_goal[0:3], t0+timeToNode, t, t0)
-#         # Added the [0:3] to only take x, y and z
-#         trajectory_goal = [trajec[0][0:3], trajec[1][0:3], trajec[2][0:3], 0, 0]
-#         control_input = controller.control(trajectory_goal, current_state)
-#         obs, reward, done, info = env.step(control_input['cmd_motor_speeds'])
-
-#         real_trajectory['x'].append(obs['x'][0])
-#         real_trajectory['y'].append(obs['x'][1])
-#         real_trajectory['z'].append(obs['x'][2])
-
-#         des_trajectory['x'].append(trajectory_goal[0][0])
-#         des_trajectory['y'].append(trajectory_goal[0][1])
-#         des_trajectory['z'].append(trajectory_goal[0][2])
-#         current_state = obs
-#         # Update time 
-#         t += dt
-#         # Check if goal is reached
-#         if np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal[0:3]) < 0.01 and np.all(curr_goal == goal):
-#             print("Done!")
-#             final_goal_reached = True
-#             break
-#         # Check if close enough to current_goal to change direction to new goal
-#         elif np.linalg.norm(np.array([obs['x'][0], obs['x'][1], obs['x'][2]]) - curr_goal[0:3]) < 0.25 and not np.all(curr_goal == goal):
-#             curr_goal_ind += 1
-#             past_goal = curr_goal
-#             # print(curr_goal)
-#             curr_goal = tree.sorted_vertices[curr_goal_ind].state
-#             timeToNode = curr_goal[3] - past_goal[3]
-#             dt = timeToNode/dt_fraction #Variable, dt is determined by fraction of the timeToNode
-#             t0 = t
-#         elif(t>endOfTime):
-#             raise ValueError("Beyond simulation time reached, trajectory following failed")
+    elif t > t_end and t < t_traj[-1]:
+        curr_path_index += 1
+        t_end = t_traj[curr_path_index+1]    
 
 #%%
 fig = plt.figure()
@@ -312,7 +266,7 @@ ani = animation.FuncAnimation(fig=fig,
 plt.show()
 
 print("Saving animation ... (takes a minute or so)")
-f = r"./animation_side_kino_2.gif" 
+f = r"./animation_side_RRT_2.gif" 
 writergif = animation.PillowWriter(fps=200) 
 ani.save(f, writer='imagemagick', fps=30)
 print("Saved animation!")
