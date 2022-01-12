@@ -9,7 +9,7 @@ except ModuleNotFoundError:
     from Trajectory import smax, jmax, amax, vmax, crit_value
     from Trajectory import find_xC, Trajectory, plot_trajectories
 
-def find_kinodynamic_trajectory(start, end, t0=0):
+def find_kinodynamic_trajectory(start, end, t0=0, t_end=None):
     """
     Find a suboptimal kinodynamic trajectory from start to end.
 
@@ -24,15 +24,22 @@ def find_kinodynamic_trajectory(start, end, t0=0):
     T_y, T_arr_y, vD_arr_y, vD_arr_B_y, vD_arr_G_y, aB_arr_y, aG_arr_y, y_traj = find_shortest_time(start[0,1], end[0,1], start[1,1], end[1,1], start[2,1], end[2,1], t0)
     T_z, T_arr_z, vD_arr_z, vD_arr_B_z, vD_arr_G_z, aB_arr_z, aG_arr_z, z_traj = find_shortest_time(start[0,2], end[0,2], start[1,2], end[1,2], start[2,2], end[2,2], t0)
 
-    if T_x == max([T_x, T_y, T_z]):
+    if t_end is None:
+        t_end = max([T_x, T_y, T_z])
+
+    if T_x == t_end:
         y_traj = __synchronize(T_x, T_arr_y, vD_arr_y, vD_arr_B_y, vD_arr_G_y, aB_arr_y, aG_arr_y, start[:, 1], end[:, 1], t0)
         z_traj = __synchronize(T_x, T_arr_z, vD_arr_z, vD_arr_B_z, vD_arr_G_z, aB_arr_z, aG_arr_z, start[:, 2], end[:, 2], t0)
-    elif T_y == max([T_x, T_y, T_z]):
+    elif T_y == t_end:
         x_traj = __synchronize(T_y, T_arr_x, vD_arr_x, vD_arr_B_x, vD_arr_G_x, aB_arr_x, aG_arr_x, start[:, 0], end[:, 0], t0)
         z_traj = __synchronize(T_y, T_arr_z, vD_arr_z, vD_arr_B_z, vD_arr_G_z, aB_arr_z, aG_arr_z, start[:, 2], end[:, 2], t0)
-    else:
+    elif T_z == t_end:
         x_traj = __synchronize(T_z, T_arr_x, vD_arr_x, vD_arr_B_x, vD_arr_G_x, aB_arr_x, aG_arr_x, start[:, 0], end[:, 0], t0)
         y_traj = __synchronize(T_z, T_arr_y, vD_arr_y, vD_arr_B_y, vD_arr_G_y, aB_arr_y, aG_arr_y, start[:, 1], end[:, 1], t0)
+    else:
+        x_traj = __synchronize(t_end, T_arr_x, vD_arr_x, vD_arr_B_x, vD_arr_G_x, aB_arr_x, aG_arr_x, start[:, 0], end[:, 0], t0)
+        y_traj = __synchronize(t_end, T_arr_y, vD_arr_y, vD_arr_B_y, vD_arr_G_y, aB_arr_y, aG_arr_y, start[:, 1], end[:, 1], t0)
+        z_traj = __synchronize(t_end, T_arr_z, vD_arr_z, vD_arr_B_z, vD_arr_G_z, aB_arr_z, aG_arr_z, start[:, 2], end[:, 2], t0)
   
     return x_traj, y_traj, z_traj
 
@@ -207,7 +214,7 @@ def find_shortest_time(x0, xF, v0, vF, a0, aF, t0):
 
     tA1_opt, tA2_opt, tC1_opt, tC2_opt, tE1_opt, tE2_opt, tH1_opt, tH2_opt, tB_opt, tG_opt = find_times(np.array([aB]), np.array([vD_opt]), a0, np.array([aG]), np.array([vD_opt]), -aF, vD_tB0_b, vD_tB0_g)
     times_list = [2*tA1_opt[0], tA2_opt[0], tB_opt[0], 2*tC1_opt[0], tC2_opt[0], tD, 2*tE1_opt[0], tE2_opt[0], tG_opt[0], 2*tH1_opt[0], tH2_opt[0]]
-    
+
     time_stamps = { 'tA1': tA1_opt[0],
                     'tA2': tA2_opt[0],
                     'tC1': tC1_opt[0],
@@ -309,7 +316,8 @@ def create_trajectory_from_vertices(vertices, optimize=True):
         start = np.r_['0,2', vertex.parent_vertex.state[0:3], [0,0,0], [0,0,0]]
         end = np.r_['0,2', vertex.state[0:3], [0,0,0], [0,0,0]]
 
-        x_traj, y_traj, z_traj = find_kinodynamic_trajectory(start, end, t0)
+        print(vertex.state[3])
+        x_traj, y_traj, z_traj = find_kinodynamic_trajectory(start, end, t0, vertex.state[3]-t0)
         t_end_traj = x_traj.t0 + x_traj.target_time
         t0 = t_end_traj
         t_temp.append(t_end_traj)
@@ -335,7 +343,7 @@ def create_trajectory_from_vertices(vertices, optimize=True):
     
         # x1 = t_cross - 1.5
         # x2 = min(t_cross + 1.3, (t_cross + t_end) / 2)
-        ratio = 0.37
+        ratio = 0.3
         x1 = t_cross - min((t_cross-t0) * ratio, 2)
         x2 = t_cross + min((t_end-t_cross) * ratio, 2)
         # print(x1, x2)
@@ -382,6 +390,16 @@ def create_trajectory_from_vertices(vertices, optimize=True):
 
     return smooth_path, t_complete
 
+d_arr = np.linspace(0, 17.5, 1000)
+t_arr = np.zeros_like(d_arr)
+
+for idx, d in enumerate(d_arr):
+    t_arr[idx], _, _, _, _, _, _, _ = find_shortest_time(0, d, 0, 0, 0, 0, 0)
+
+def min_time(x0, xF):
+    d = np.linalg.norm(xF-x0)
+    return np.interp(d, d_arr, t_arr)
+
 if __name__ == '__main__':
 
     
@@ -394,4 +412,7 @@ if __name__ == '__main__':
                       [ 0.        ,  0.        ,  0.        ]])
 
     t0 = 0
-    plot_trajectories(find_kinodynamic_trajectory(start, end, t0))
+    # plot_trajectories(find_kinodynamic_trajectory(start, end, t0))
+    plt.figure()
+    plt.plot(d_arr, t_arr)
+    plt.show()

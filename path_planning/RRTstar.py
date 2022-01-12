@@ -3,6 +3,7 @@ from obstacles.ObstacleHandler import ObstacleHandler
 from path_planning.Tree import Tree
 from path_planning.Vertex import Vertex
 import numpy.random as rand
+from path_planning.TrajectoryOptimization import min_time
 
 class RRTstar(RRT):
     """
@@ -46,7 +47,7 @@ class RRTstar(RRT):
                 q_random = Vertex(rand.uniform(high=self.max_conf_space))
 
             # Find its neighbours that it can reach
-            q_neighbours, collision_free_neighbours, q_neighbours_after_current = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
+            q_neighbours, collision_free_neighbours, _ = self.tree.find_collision_free_neighbours(q_random, self.tree.vertices, self.obstacleHandler)
 
             # If any neighbour is reachable, find the lowest cost, add it to the tree and reroute the tree.
             if len(collision_free_neighbours) > 0:
@@ -55,14 +56,18 @@ class RRTstar(RRT):
                 # Now use all neighbours for rerouting
                 self.tree.reroute(q_random, q_neighbours, self.obstacleHandler)
 
-
-                if not self.obstacleHandler.line_through_obstacles(q_random.state, q_goal.state) and not goal_added_to_tree:
-                    print("Goal found!")
+                min_t_to_goal = min_time(q_random.state[0:3], q_goal.state[0:3])
+                goal_time_pass = q_goal.state[3] - q_random.state[3] > min_t_to_goal
+                if not self.obstacleHandler.line_through_obstacles(q_random.state, q_goal.state) and not goal_added_to_tree and goal_time_pass:
+                    print(f"Goal found in {i} iterations!")
+                    q_goal.state[3] = q_random.state[3] + 1.1 * min_t_to_goal
                     self.tree.add_vertex(q_goal, q_random)
                     goal_added_to_tree = True
         
         # Sort the tree such that we know the path from start to end.
         if goal_added_to_tree:
+            min_t_to_goal = min_time(q_goal.parent_vertex.state[0:3], q_goal.state[0:3])
+            q_goal.state[3] = q_goal.parent_vertex.state[3] + 1.1 * min_t_to_goal   
             self.tree.sort(q_goal)
         else:
             self.tree.sort()

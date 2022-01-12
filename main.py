@@ -14,10 +14,11 @@ from path_planning.TrajectoryOptimization import find_kinodynamic_trajectory, cr
 from path_planning.Trajectory import plot_trajectories
 
 ### Start and goal
-endOfTime = 21
+endOfTime = 40
 fast_obst = True # Options: True and False. 
 kinodynamic = True # Use kinodynamic RRT* extention (use with RRTstar)
-environment = 2 # 0, 1 or 2, for different environments
+environment = 1 # 0, 1 or 2, for different environments
+RRTstar_active = True # True for RRT*, False for RRT
 # Each environment has one moving forklift and a number of static shelves
 
 obs_list = []
@@ -131,9 +132,10 @@ dobs_list.sort(key = lambda obs : obs.position[3])
 obHand = ObstacleHandler(sobs_list + dobs_list)
 
 ### Pick one of the path planning methods
-# The first array indicates the max configuration space, the second represents the obstacles
-path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
-# path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
+if RRTstar_active:
+    path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand)
+else:
+    path = RRT(np.array([10, 10, 10, endOfTime]), obHand)
 
 tree = path.find_path(start, goal, 500)
 print("Path found!")
@@ -265,8 +267,8 @@ ani = animation.FuncAnimation(fig=fig,
 
 plt.show()
 
-print("Saving animation ... (takes a minute or so)")
-f = r"./animation_side_RRT_2.gif" 
-writergif = animation.PillowWriter(fps=200) 
-ani.save(f, writer='imagemagick', fps=30)
-print("Saved animation!")
+# print("Saving animation ... (takes a minute or so)")
+# f = r"./animation_side_kino_2.gif" 
+# writergif = animation.PillowWriter(fps=200) 
+# ani.save(f, writer='imagemagick', fps=30)
+# print("Saved animation!")

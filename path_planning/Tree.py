@@ -1,5 +1,6 @@
 import numpy as np
 from path_planning.Vertex import Vertex
+from path_planning.TrajectoryOptimization import min_time
 
 class Tree:
     """
@@ -65,9 +66,10 @@ class Tree:
             List with all collision-free neighbours.
         """
         q_neighbours = [q for q in q_neighbours if not obs_hand.line_through_obstacles(q.state, q_center.state)]
-        q_neighbours_before_current = [q for q in q_neighbours if q.state[3] - q_center.state[3] < 0]
-        q_neighbours_after_current = [q for q in q_neighbours if q.state[3] - q_center.state[3] > 0]
-
+        q_neighbours_before_current = [q for q in q_neighbours if q.state[3] - q_center.state[3] < -min_time(q.state[0:3], q_center.state[0:3])]
+        q_neighbours_after_current = [q for q in q_neighbours if q.state[3] - q_center.state[3] > -min_time(q.state[0:3], q_center.state[0:3])]
+        # time = [[q.state[3], q_center.state[3], min_time(q.state[0:3], q_center.state[0:3])] for q in q_neighbours]
+        # print(time)
         return q_neighbours, q_neighbours_before_current, q_neighbours_after_current
 
     def add_vertex(self, q_add, q_connection_point=None) -> None:
@@ -135,7 +137,7 @@ class Tree:
 
         # Check the vertices that are within this radius
         vertices_to_check = [vertex for vertex in neighbours if vertex_add.distance_to(vertex) <= radius]
-        vertices_to_check_before_current = [vertex for vertex in vertices_to_check if vertex_add.state[3] - vertex.state[3] > 0]
+        vertices_to_check_before_current = [vertex for vertex in vertices_to_check if vertex_add.state[3] - vertex.state[3] >  min_time(vertex_add.state[0:3], vertex.state[0:3])]
 
         if len(vertices_to_check_before_current) > 0:
             

@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 vmax = 1.5
-amax = 3
-jmax = 8
+amax = 4
+jmax = 12
 smax = 50
 
 crit_value = jmax**2/smax
@@ -202,6 +202,7 @@ def find_xC(tA1, tA2, tC1, tC2, tB, x0, v0, a0, aB):
            (7*s4*tC1**3*tC2)/6 + (3*s4*tC1**2*tC2**2)/4 + 2*aB*tC1**2 + (s4*tC1*tC2**3)/6 + 2*aB*tC1*tC2 + 2*v0*tC1 + \
             (aB*tC2**2)/2 + v0*tC2 + x0
 
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
@@ -259,3 +260,4 @@ def plot_trajectories(traj_list):
         ax3.plot(t, a)
         ax4.plot(t, j)
     # plt.show()
+
