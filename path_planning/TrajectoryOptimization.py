@@ -71,8 +71,8 @@ def __synchronize(Tmax, T_arr, vD_arr, vD_arr_B, vD_arr_G, aB_arr, aG_arr, start
     aB = np.interp(vD_sync, vD_arr_B, aB_arr)
     aG = np.interp(vD_sync, vD_arr_G, aG_arr)
 
-    _, vD_tB0_b = find_aB_vD(start[1], start[2], np.array([aB]), start[0]>end[0])
-    _, vD_tB0_g = find_aB_vD(end[1], -end[2], np.array([aG]), start[0]>end[0])
+    _, vD_tB0_b = find_aB_vD(start[1], start[2], np.array([aB]))
+    _, vD_tB0_g = find_aB_vD(end[1], -end[2], np.array([aG]))
 
     tA1, tA2, tC1, tC2, tE1, tE2, tH1, tH2, tB, tG = find_times(np.array([aB]), np.array([vD_sync]), start[2], np.array([aG]), np.array([vD_sync]), -end[2], vD_tB0_b, vD_tB0_g)
     xC = find_xC(tA1, tA2, tC1, tC2, tB, start[0], start[1], start[2], aB)
