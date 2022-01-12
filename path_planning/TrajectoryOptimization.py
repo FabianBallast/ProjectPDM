@@ -16,6 +16,8 @@ def find_kinodynamic_trajectory(start, end, t0=0, t_end=None):
     Args:
         - Start: Numpy array of shape (3x3) as [[x y z], [dx dy dz], [ddx ddy ddz]] of start state
         - End:   Numpy array of shape (3x3) as [[x y z], [dx dy dz], [ddx ddy ddz]] of end state
+        - t0: Starting time of trajectory.
+        - t_end: Required stop time of trajectory. If None, then automatically the fastest feasible trajectory is generated.
     
     Returns:
         - Trajectories: List of 3 trajectories, one for x, y and z each.
@@ -44,7 +46,9 @@ def find_kinodynamic_trajectory(start, end, t0=0, t_end=None):
     return x_traj, y_traj, z_traj
 
 def __synchronize(Tmax, T_arr, vD_arr, vD_arr_B, vD_arr_G, aB_arr, aG_arr, start, end, t0):
-    
+    """
+    Synchronize the trajectories such that they all start at t0 and end after 'end' seconds.
+    """
     if np.max(T_arr) < Tmax:
         raise Exception("Cannot sync these trajectories.")
 
@@ -64,13 +68,6 @@ def __synchronize(Tmax, T_arr, vD_arr, vD_arr_B, vD_arr_G, aB_arr, aG_arr, start
         vD_arr_G = np.flip(vD_arr_G)
         aG_arr = np.flip(aG_arr)
 
-
-    # plt.figure()
-    # plt.plot(vD_arr_B, aB_arr)
-
-    # plt.figure()
-    # plt.plot(vD_arr_G, aG_arr)
-
     aB = np.interp(vD_sync, vD_arr_B, aB_arr)
     aG = np.interp(vD_sync, vD_arr_G, aG_arr)
 
@@ -85,24 +82,10 @@ def __synchronize(Tmax, T_arr, vD_arr, vD_arr_B, vD_arr_G, aB_arr, aG_arr, start
     time_stamps = { 'tA1': tA1[0], 'tA2': tA2[0], 'tC1': tC1[0], 'tC2': tC2[0], 'tB' : tB[0], 'tD' : abs(delta_X[-1]) / abs(vD_sync), 
                     'tE1': tE1[0], 'tE2': tE2[0], 'tH1': tH1[0], 'tH2': tH2[0], 'tG' : tG[0]}
 
-    # print(time_stamps)
-    # print(vD_sync, aB, aG)
-    # print()
     return Trajectory(start, end, time_stamps, aB, aG, t0)
 
 
-def find_aB_vD(v0, a0, aB_arr, forward=True):
-
-    # if forward:
-    #     aB_arr = np.linspace(abs(a0), amax, 1000)
-    # else:
-    #     aB_arr = np.linspace(-amax, -abs(a0), 1000)
-    # if forward:
-    #     aB_arr = np.linspace(0, amax, 1000)
-    # else:
-    #     aB_arr = np.linspace(-amax, 0, 1000)
-    
-    # aB_arr = aB_arr[abs(aB_arr) > abs(a0)]
+def find_aB_vD(v0, a0, aB_arr):
 
     vD_arr = np.zeros_like(aB_arr)
 
@@ -117,10 +100,7 @@ def find_aB_vD(v0, a0, aB_arr, forward=True):
     case_h = (abs(aB_arr - a0) <= crit_value) & (abs(aB_arr) <= crit_value) & (aB_arr <=  -abs(a0))
 
     case_i = (aB_arr < abs(a0)) & (aB_arr >= 0) 
-    case_j = (aB_arr > -abs(a0)) & (aB_arr < 0) 
-    # print(sum(case_a), sum(case_b), sum(case_c), sum(case_d))
-    # print(aB[case_a], aB[case_b], aB[case_c], aB[case_d])
-    
+    case_j = (aB_arr > -abs(a0)) & (aB_arr < 0)     
     
     vD_arr[case_a] = v0 + (2*aB_arr[case_a]**2 - a0**2) / (2*jmax) + (jmax * (a0 + 2*aB_arr[case_a]) / (2*smax))
     vD_arr[case_b] = v0 + (jmax * (a0 + aB_arr[case_b]) +  2 * aB_arr[case_b]*np.sqrt(smax * aB_arr[case_b])) / (2*smax) - (a0**2 - aB_arr[case_b]**2) / (2*jmax)
@@ -134,22 +114,17 @@ def find_aB_vD(v0, a0, aB_arr, forward=True):
     vD_arr[case_i] = v0 + 2*a0*abs(aB_arr[case_i])**(1/2)*(1/smax)**(1/2) - abs(aB_arr[case_i])**(3/2)*(1/smax)**(1/2)
     vD_arr[case_j] = v0 - 2*a0*abs(aB_arr[case_j])**(1/2)*(1/smax)**(1/2) + abs(aB_arr[case_j])**(3/2)*(1/smax)**(1/2)
 
-    # plt.figure()
-    # plt.plot(aB_arr, vD_arr)
-    # plt.show()
     return aB_arr, vD_arr
 
 def find_shortest_time(x0, xF, v0, vF, a0, aF, t0):
 
-    forward = xF > x0
     aB_arr = np.linspace(-amax, amax, 5000)
-    aB_arr, vD_arr_B = find_aB_vD(v0, a0, aB_arr, forward)
-    aG_arr, vD_arr_G = find_aB_vD(vF, -aF, aB_arr, forward)
+    aB_arr, vD_arr_B = find_aB_vD(v0, a0, aB_arr)
+    aG_arr, vD_arr_G = find_aB_vD(vF, -aF, aB_arr)
 
     v_min = max(np.min(vD_arr_B), np.min(vD_arr_G), -vmax)
     v_max = min(np.max(vD_arr_B), np.max(vD_arr_G), vmax)
   
-    # vD_interest = np.linspace(v0, np.sign(forward - 0.5) * vmax, 1000)
     vD_interest = np.linspace(v_min, v_max, 5000)
     aB_interest = np.interp(vD_interest, vD_arr_B, aB_arr)
     aG_interest = np.interp(vD_interest, vD_arr_G, aG_arr)
@@ -167,21 +142,10 @@ def find_shortest_time(x0, xF, v0, vF, a0, aF, t0):
     aB_interest = aB_interest[valid_idx]
     aG_interest = aG_interest[valid_idx]
 
-    # plt.figure()
-    # plt.plot(vD_interest, aB_interest)
-
-    # print(tE1[0], tE2[0], tH1[0], tH2[0], tG[0])
-    # print(aF, aG_interest[0])
     xC = find_xC(tA1, tA2, tC1, tC2, tB, x0, v0, a0, aB_interest)
     xE = 2*xF - find_xC(tH1, tH2, tE1, tE2, tG, xF, vF, -aF, aG_interest)
-    # print(xC[0], xC[-1])
 
     delta_X = xE - xC
-
-    # print(delta_X)
-
-    # plt.figure()
-    # plt.plot(vD_interest, delta_X)
     
     if delta_X[0] * delta_X[-1] < 0 and delta_X[0] > delta_X[-1]:
         vD_opt = np.interp(0, np.flip(delta_X), np.flip(vD_interest))
@@ -196,7 +160,6 @@ def find_shortest_time(x0, xF, v0, vF, a0, aF, t0):
         vD_opt = vD_interest[0]
         tD = abs(delta_X[0]) / abs(vD_opt)
 
-    # print(vD_opt)
     aB = np.interp(vD_opt, vD_arr_B, aB_arr)
     aG = np.interp(vD_opt, vD_arr_G, aG_arr)
 
@@ -205,12 +168,9 @@ def find_shortest_time(x0, xF, v0, vF, a0, aF, t0):
     
     if abs(aG) < abs(aF):
         aG = -aF
-    
-    # aB = a0
-    # vD_opt = 0.03
 
-    _, vD_tB0_b = find_aB_vD(v0, a0, np.array([aB]), forward)
-    _, vD_tB0_g = find_aB_vD(vF, -aF, np.array([aG]), forward)
+    _, vD_tB0_b = find_aB_vD(v0, a0, np.array([aB]))
+    _, vD_tB0_g = find_aB_vD(vF, -aF, np.array([aG]))
 
     tA1_opt, tA2_opt, tC1_opt, tC2_opt, tE1_opt, tE2_opt, tH1_opt, tH2_opt, tB_opt, tG_opt = find_times(np.array([aB]), np.array([vD_opt]), a0, np.array([aG]), np.array([vD_opt]), -aF, vD_tB0_b, vD_tB0_g)
     times_list = [2*tA1_opt[0], tA2_opt[0], tB_opt[0], 2*tC1_opt[0], tC2_opt[0], tD, 2*tE1_opt[0], tE2_opt[0], tG_opt[0], 2*tH1_opt[0], tH2_opt[0]]
@@ -227,19 +187,6 @@ def find_shortest_time(x0, xF, v0, vF, a0, aF, t0):
                     'tH2': tH2_opt[0],
                     'tG' : tG_opt[0]}
 
-    # plt.figure()
-    # plt.plot(vD_interest, delta_X)
-    # valid_idx = np.sign(delta_X) == np.sign(vD_interest)
-
-    # plt.figure()
-    # plt.plot(vD_interest, delta_X)
-    
-    # plt.figure()
-    # plt.plot(vD_interest, xC)
-
-    # plt.figure()
-    # plt.plot(vD_interest, xE)
-
     valid_idx = np.sign(delta_X) == np.sign(vD_interest)
     
     delta_X = delta_X[valid_idx]
@@ -249,20 +196,6 @@ def find_shortest_time(x0, xF, v0, vF, a0, aF, t0):
     
     T_arr = 2*tA1[valid_idx] + tA2[valid_idx] + tB[valid_idx] + 2*tC1[valid_idx] + tC2[valid_idx] + tD_arr + 2*tE1[valid_idx] + tE2[valid_idx] + tG[valid_idx] + 2*tH1[valid_idx] + tH2[valid_idx] 
 
-    # plt.figure()
-    # plt.plot(vD_interest, aB_interest[valid_idx])
-    # print(np.interp(-0.8028, vD_interest, aB_interest[valid_idx]))
-    # print(time_stamps)
-    # print(aB, aG, vD_opt)
-    # print()
-
-    # plt.figure()
-    # plt.plot(vD_interest, delta_X)
-
-
-    
-    # plt.show()
-    # T_x, T_arr_x, vD_arr_x, vD_arr_B_x, vD_arr_G_x, aB_arr_x, aG_arr_x, delta_x, x_traj
     return sum(times_list), T_arr, vD_interest, vD_B[valid_idx], vD_G[valid_idx], aB_interest[valid_idx], aG_interest[valid_idx], Trajectory([x0, v0, a0], [xF, vF, aF], time_stamps, aB, aG, t0)
 
 
@@ -274,8 +207,6 @@ def find_times(aB, vD_b, a0, aG, vD_g, aF, vD_tB0_b, vD_tB0_g):
 
     aB_maxed = (aB == amax) | (aB == -amax) 
     aB_a0 = aB == a0
-    # if len(aB_a0) == 1:
-    #     print(aB_a0, vD_tB0_b[aB_a0], vD_b[aB_a0])
 
     tB = np.zeros_like(aB)
     tB[(~aB_maxed) & (~aB_a0)] = 0
@@ -284,8 +215,7 @@ def find_times(aB, vD_b, a0, aG, vD_g, aF, vD_tB0_b, vD_tB0_g):
 
     aG_maxed = (aG == amax) | (aG == -amax)
     aG_aF = aG == aF
-    # if len(aG_aF) == 1:
-    #     print(aG_aF, vD_tB0_g[aG_aF], vD_g[aG_aF])
+ 
     tG = np.zeros_like(aG)
     tG[~aG_maxed & ~aG_aF] = 0
     tG[aG_maxed] = np.abs((vD_tB0_g[aG_maxed] - vD_g[aG_maxed]) / amax)
@@ -356,12 +286,6 @@ def create_trajectory_from_vertices(vertices, optimize=True):
         state1 = np.asarray([curr_path_x.evaluate_track(x1)[:3], curr_path_y.evaluate_track(x1)[:3], curr_path_z.evaluate_track(x1)[:3]]).T
         state2 = np.asarray([next_path_x.evaluate_track(x2)[:3], next_path_y.evaluate_track(x2)[:3], next_path_z.evaluate_track(x2)[:3]]).T
         state3 = np.asarray([next_path_x.evaluate_track(t_end)[:3], next_path_y.evaluate_track(t_end)[:3], next_path_z.evaluate_track(t_end)[:3]]).T
-
-        # print(state0)
-        # print(state1)
-        # print(state2)
-        # # print(state3)
-        # print()
 
         x_traj1, y_traj1, z_traj1 = find_kinodynamic_trajectory(state0, state1, t0) 
         # plot_trajectories([x_traj1, y_traj1, z_traj1])
