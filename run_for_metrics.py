@@ -13,14 +13,16 @@ from util.traj_from_line import point_from_traj
 import geom_controller as cont 
 from path_planning.TrajectoryOptimization import find_kinodynamic_trajectory, create_trajectory_from_vertices
 from path_planning.Trajectory import plot_trajectories
+import time as ti
 
 ### Start and goal
 endOfTime = 30
 fast_obst = True # Options: True and False. 
-iterations = 5 # Run RRT and RRTstar this many times each for each env
+iterations = 3 # Run RRT and RRTstar this many times each for each env
 
 # Environment 0
 print("Environment 0")
+
 obs_list = []
 start = np.array([9,9,1,0])
 goal = np.array([1,1,9,endOfTime])
@@ -77,8 +79,14 @@ sum_RRTstar_dist0 = 0
 sum_RRT_dist0 = 0
 sum_RRTstar_time0 = 0
 sum_RRT_time0 = 0
+sum_kino_RRT0 = 0
+kino_fails0 = 0
+sum_RRTstar_code0 = 0
+sum_RRT_code0 = 0
+sum_kino_RRT_code0 = 0
 
 for i in range(iterations):
+    start_time = ti.time()
     # The first array indicates the max configuration space, the second represents the obstacles
     path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand, rand.randint(0,100))
     print(f"RRTstar iteration: {i+1}")
@@ -87,11 +95,22 @@ for i in range(iterations):
     print("Path found!")
     root_node = tree.sorted_vertices[0]
     goal_node = tree.sorted_vertices[-1]
-    sum_RRTstar_time0 += goal_node.state[3] - root_node.state[3]
+    smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=False)
+    sum_RRTstar_code0 += ti.time() - start_time
+    sum_RRTstar_time0 += t_traj[-1]
     sum_RRTstar_dist0 += goal_node.distance_to_root()
+    try:
+        smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=True)
+        sum_kino_RRT_code0 += ti.time() - start_time
+        sum_kino_RRT0 += t_traj[-1]
+    except:
+        print("Kino path failed, disregarded")
+        kino_fails0 += 1
+        pass
 
 
 for i in range(iterations):
+    start_time = ti.time()
     # The first array indicates the max configuration space, the second represents the obstacles
     path = RRT(np.array([10, 10, 10, endOfTime]), obHand, rand.randint(0,100))
     print(f"RRT iteration: {i+1}")
@@ -100,13 +119,25 @@ for i in range(iterations):
     print("Path found!")
     root_node = tree.sorted_vertices[0]
     goal_node = tree.sorted_vertices[-1]
-    sum_RRT_time0 += goal_node.state[3] - root_node.state[3]
+    smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=False)
+    sum_RRT_code0 += ti.time() - start_time
+    sum_RRT_time0 += t_traj[-1]
     sum_RRT_dist0 += goal_node.distance_to_root()
 
+if(iterations-kino_fails0 != 0):
+    print("avg_kinodynamic_RRTstar_time", sum_kino_RRT0/(iterations-kino_fails0))
+else:
+    print("Kino failed every time")
 print("avg_RRTstar_time", sum_RRTstar_time0/iterations)
 print("avg_RRT_time", sum_RRT_time0/iterations)
 print("avg_RRTstar_dist", sum_RRTstar_dist0/iterations)
 print("avg_RRT_dist", sum_RRT_dist0/iterations)
+if(iterations-kino_fails0 != 0):
+    print("avg_kino_RRT_code", sum_kino_RRT_code0/(iterations-kino_fails0))
+else:
+    print("Kino failed every time")
+print("avg_RRTstar_code", sum_RRTstar_code0/iterations)
+print("avg_RRT_code", sum_RRT_code0/iterations)
 
 # Environment 1
 print("Environment 1")
@@ -169,8 +200,14 @@ sum_RRTstar_dist1 = 0
 sum_RRT_dist1 = 0
 sum_RRTstar_time1 = 0
 sum_RRT_time1 = 0
+sum_kino_RRT1 = 0
+kino_fails1 = 0
+sum_RRTstar_code1 = 0
+sum_RRT_code1 = 0
+sum_kino_RRT_code1 = 0
 
 for i in range(iterations):
+    start_time = ti.time()
     # The first array indicates the max configuration space, the second represents the obstacles
     path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand, rand.randint(0,100))
     print(f"RRTstar iteration: {i+1}")
@@ -179,11 +216,22 @@ for i in range(iterations):
     print("Path found!")
     root_node = tree.sorted_vertices[0]
     goal_node = tree.sorted_vertices[-1]
-    sum_RRTstar_time1 += goal_node.state[3] - root_node.state[3]
+    smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=False)
+    sum_RRTstar_code1 += ti.time() - start_time
+    sum_RRTstar_time1 += t_traj[-1]
     sum_RRTstar_dist1 += goal_node.distance_to_root()
+    try:
+        smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=True)
+        sum_kino_RRT_code1 += ti.time() - start_time
+        sum_kino_RRT1 += t_traj[-1]
+    except:
+        print("Kino path failed, disregarded")
+        kino_fails1 += 1
+        pass
 
 
 for i in range(iterations):
+    start_time = ti.time()
     # The first array indicates the max configuration space, the second represents the obstacles
     path = RRT(np.array([10, 10, 10, endOfTime]), obHand, rand.randint(0,100))
     print(f"RRT iteration: {i+1}")
@@ -192,13 +240,25 @@ for i in range(iterations):
     print("Path found!")
     root_node = tree.sorted_vertices[0]
     goal_node = tree.sorted_vertices[-1]
-    sum_RRT_time1 += goal_node.state[3] - root_node.state[3]
+    smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=False)
+    sum_RRT_code1 += ti.time() - start_time
+    sum_RRT_time1 += t_traj[-1]
     sum_RRT_dist1 += goal_node.distance_to_root()
 
+if(iterations-kino_fails1 != 0):
+    print("avg_kinodynamic_RRTstar_time", sum_kino_RRT1/(iterations-kino_fails1))
+else:
+    print("Kino failed every time")
 print("avg_RRTstar_time", sum_RRTstar_time1/iterations)
 print("avg_RRT_time", sum_RRT_time1/iterations)
 print("avg_RRTstar_dist", sum_RRTstar_dist1/iterations)
 print("avg_RRT_dist", sum_RRT_dist1/iterations)
+if(iterations-kino_fails1 != 0):
+    print("avg_kino_RRT_code", sum_kino_RRT_code1/(iterations-kino_fails1))
+else:
+    print("Kino failed every time")
+print("avg_RRTstar_code", sum_RRTstar_code1/iterations)
+print("avg_RRT_code", sum_RRT_code1/iterations)
 
 # Environment 2
 print("Environment 2")
@@ -261,8 +321,14 @@ sum_RRTstar_dist2 = 0
 sum_RRT_dist2 = 0
 sum_RRTstar_time2 = 0
 sum_RRT_time2 = 0
+sum_kino_RRT2 = 0
+kino_fails2 = 0
+sum_RRTstar_code2 = 0
+sum_RRT_code2 = 0
+sum_kino_RRT_code2 = 0
 
 for i in range(iterations):
+    start_time = ti.time()
     # The first array indicates the max configuration space, the second represents the obstacles
     path = RRTstar(np.array([10, 10, 10, endOfTime]), obHand, rand.randint(0,100))
     print(f"RRTstar iteration: {i+1}")
@@ -271,11 +337,22 @@ for i in range(iterations):
     print("Path found!")
     root_node = tree.sorted_vertices[0]
     goal_node = tree.sorted_vertices[-1]
-    sum_RRT_time2 += goal_node.state[3] - root_node.state[3]
+    smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=False)
+    sum_RRTstar_code2 += ti.time() - start_time
+    sum_RRTstar_time2 += t_traj[-1]
     sum_RRTstar_dist2 += goal_node.distance_to_root()
+    try:
+        smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=True)
+        sum_kino_RRT_code2 += ti.time() - start_time
+        sum_kino_RRT2 += t_traj[-1]
+    except:
+        print("Kino path failed, disregarded")
+        kino_fails2+=1
+        pass
 
 
 for i in range(iterations):
+    start_time = ti.time()
     # The first array indicates the max configuration space, the second represents the obstacles
     path = RRT(np.array([10, 10, 10, endOfTime]), obHand, rand.randint(0,100))
     print(f"RRT iteration: {i+1}")
@@ -284,18 +361,34 @@ for i in range(iterations):
     print("Path found!")
     root_node = tree.sorted_vertices[0]
     goal_node = tree.sorted_vertices[-1]
-    sum_RRT_time2 += goal_node.state[3] - root_node.state[3]
+    smooth_path, t_traj = create_trajectory_from_vertices(tree.sorted_vertices,optimize=False)
+    sum_RRT_code2 += ti.time() - start_time
+    sum_RRT_time2 += t_traj[-1]
     sum_RRT_dist2 += goal_node.distance_to_root()
 
+if(iterations-kino_fails2 != 0):
+    print("avg_kinodynamic_RRTstar_time", sum_kino_RRT2/(iterations-kino_fails2))
+else:
+    print("Kino failed every time")
 print("avg_RRTstar_time", sum_RRTstar_time2/iterations)
 print("avg_RRT_time", sum_RRT_time2/iterations)
 print("avg_RRTstar_dist", sum_RRTstar_dist2/iterations)
 print("avg_RRT_dist", sum_RRT_dist2/iterations)
+if(iterations-kino_fails2 != 0):
+    print("avg_kino_RRT_code", sum_kino_RRT_code2/(iterations-kino_fails2))
+else:
+    print("Kino failed every time")
+print("avg_RRTstar_code", sum_RRTstar_code2/iterations)
+print("avg_RRT_code", sum_RRT_code2/iterations)
 
 
 # Total performance
 print("All environments")
-print("total avg_RRTstar_time", (sum_RRTstar_time0+sum_RRTstar_time1+sum_RRTstar_time2)/3)
-print("total avg_RRT_time", (sum_RRT_time0+sum_RRT_time1+sum_RRT_time2)/3)
-print("total avg_RRTstar_dist", (sum_RRTstar_dist0+sum_RRTstar_dist1+sum_RRTstar_dist2)/3)
-print("total avg_RRT_dist", (sum_RRT_dist0+sum_RRT_dist1+sum_RRT_dist2)/3)
+print("total avg_kinodynamic_RRTstar_time", (sum_kino_RRT0+sum_kino_RRT1+sum_kino_RRT2)/(3*iterations))
+print("total avg_RRTstar_time", (sum_RRTstar_time0+sum_RRTstar_time1+sum_RRTstar_time2)/(3*iterations))
+print("total avg_RRT_time", (sum_RRT_time0+sum_RRT_time1+sum_RRT_time2)/(3*iterations))
+print("total avg_RRTstar_dist", (sum_RRTstar_dist0+sum_RRTstar_dist1+sum_RRTstar_dist2)/(3*iterations))
+print("total avg_RRT_dist", (sum_RRT_dist0+sum_RRT_dist1+sum_RRT_dist2)/(3*iterations))
+print("total avg_kino_RRT_code", (sum_kino_RRT_code0+sum_kino_RRT_code1+sum_kino_RRT_code2)/(3*iterations))
+print("total avg_RRTstar_code", (sum_RRTstar_code0+sum_RRTstar_code1+sum_RRTstar_code2)/(3*iterations))
+print("total avg_RRT_code", (sum_RRT_code0+sum_RRT_code1+sum_RRT_code2)/(3*iterations))
