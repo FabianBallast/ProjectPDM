@@ -10,7 +10,7 @@ class RRTstar(RRT):
     A class to find a path using RRT*.
     """
 
-    def __init__(self, max_configuration_space, obsHand: ObstacleHandler, seed: int = 4715526):
+    def __init__(self, max_configuration_space, obsHand: ObstacleHandler, seed: int = 4715527):
         """
         Initialize the RRT* with the maximum size of the configuration space.
         This is in R^4 for now. Furthermore, also add the obstacles.
@@ -70,7 +70,7 @@ class RRTstar(RRT):
             q_goal.state[3] = q_goal.parent_vertex.state[3] + 1.1 * min_t_to_goal   
             self.tree.sort(q_goal)
         else:
-            self.tree.sort()
+            raise Exception("Goal not found...")
 
         return self.tree
 

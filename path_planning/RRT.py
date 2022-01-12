@@ -1,3 +1,4 @@
+from numpy.lib.shape_base import expand_dims
 from obstacles.ObstacleHandler import ObstacleHandler
 from path_planning.Tree import Tree
 import numpy.random as rand
@@ -7,7 +8,7 @@ class RRT:
     """
     Class to plan a path using basic RRT.
     """
-    def __init__(self, max_configuration_space, obsHand: ObstacleHandler, seed: int = 4715526):
+    def __init__(self, max_configuration_space, obsHand: ObstacleHandler, seed: int = 4715527):
         """
         Initialize the RRT with the maximum size of the configuration space.
         This is in R^4 for now. Furthermore, also add the obstacles.
@@ -68,7 +69,7 @@ class RRT:
         if goal_added_to_tree:
             self.tree.sort(q_goal)
         else:
-            self.tree.sort()
+            raise Exception("Goal not found...")
 
         return self.tree
     
