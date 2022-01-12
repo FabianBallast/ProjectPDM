@@ -97,7 +97,7 @@ class Vertex:
         """
         if self.parent_vertex is not None:
             cost = np.linalg.norm(self.state[0:3] - self.parent_vertex.state[0:3])
-            return self.get_cost() + self.parent_vertex.distance_to_root()
+            return cost + self.parent_vertex.distance_to_root()
         return 0
 
     def __eq__(self, other) -> bool:
